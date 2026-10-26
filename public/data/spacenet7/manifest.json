@@ -1,0 +1,524 @@
+{
+  "datasetName": "SpaceNet 7 Multi-Temporal Urban Development — Preloaded Evaluation Pack",
+  "officialSourceUrl": "https://spacenet.ai/sn7-challenge/",
+  "awsBucketUri": "s3://spacenet-dataset/spacenet/SN7_buildings/train/",
+  "license": "Creative Commons Attribution 4.0 International (CC-BY-4.0)",
+  "attribution": "SpaceNet LLC, CosmiQ Works, Planet Labs Inc., Capella Space, Maxar Technologies, IEEE GRSS, Amazon Web Services.",
+  "generatedAt": "2026-10-26T05:50:25.245Z",
+  "isGenuineSpaceNet7": true,
+  "methodologyNote": "Each preloaded sample is a genuine native-resolution 512x512 pixel sub-tile extracted directly from official SpaceNet 7 Planet Dove monthly GeoTIFF mosaics and paired with its official labels_match_pix tracked building-footprint annotations. All preloaded interactive samples belong strictly to the held-out test split (never seen during classifier parameter fitting).",
+  "samples": [
+    {
+      "id": "sn7-test-01",
+      "aoiId": "L15-0361E-1300N_1446_2989_13",
+      "title": "Meridian / Boise Metro, Idaho, USA",
+      "regionLabel": "Meridian / Boise Metro, Idaho, USA",
+      "split": "test",
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "intervalMonths": 24,
+      "earlierImageUrl": "/data/spacenet7/images/sn7-test-01_2018_01_earlier.png",
+      "laterImageUrl": "/data/spacenet7/images/sn7-test-01_2020_01_later.png",
+      "earlierSourceS3Key": "spacenet/SN7_buildings/train/L15-0361E-1300N_1446_2989_13/images_masked/global_monthly_2018_01_mosaic_L15-0361E-1300N_1446_2989_13.tif",
+      "laterSourceS3Key": "spacenet/SN7_buildings/train/L15-0361E-1300N_1446_2989_13/images_masked/global_monthly_2020_01_mosaic_L15-0361E-1300N_1446_2989_13.tif",
+      "earlierLabelS3Key": "spacenet/SN7_buildings/train/L15-0361E-1300N_1446_2989_13/labels_match_pix/global_monthly_2018_01_mosaic_L15-0361E-1300N_1446_2989_13_Buildings.geojson",
+      "laterLabelS3Key": "spacenet/SN7_buildings/train/L15-0361E-1300N_1446_2989_13/labels_match_pix/global_monthly_2020_01_mosaic_L15-0361E-1300N_1446_2989_13_Buildings.geojson",
+      "sourceDataset": "SpaceNet 7 Multi-Temporal Urban Development Dataset (SN7)",
+      "sourceUrl": "https://spacenet.ai/sn7-challenge/",
+      "sourceAttribution": "SpaceNet Partners & Planet Labs Inc. (Global Monthly Basemaps, CC-BY-4.0)",
+      "license": "CC-BY-4.0",
+      "isSyntheticFallback": false,
+      "spatial": {
+        "crs": "EPSG:3857",
+        "bboxMercator": [
+          -12963720,
+          5410523.39,
+          -12961274.01,
+          5412969.37
+        ],
+        "centerWgs84": {
+          "lat": 43.65201,
+          "lon": -116.44409
+        },
+        "gsdMetersPerPx": 3.456,
+        "tileAreaKm2": 3.131,
+        "cropWindow": {
+          "x0": 0,
+          "y0": 511,
+          "width": 512,
+          "height": 512,
+          "sourceWidth": 1024,
+          "sourceHeight": 1024
+        }
+      },
+      "groundTruth": {
+        "available": true,
+        "earlierCount": 450,
+        "laterCount": 859,
+        "newConstructionCount": 409,
+        "removedCount": 0,
+        "persistentCount": 450,
+        "earlierCoveragePct": 3.07,
+        "laterCoveragePct": 5.45,
+        "netCoverageDeltaPct": 2.38,
+        "newConstructionAreaM2": 74478.1,
+        "groundTruthPositive": true,
+        "groundTruthClassLabel": "Building-Related Change Present",
+        "footprintsUrl": "/data/spacenet7/footprints/sn7-test-01_footprints.json"
+      },
+      "knownLimitations": [
+        "Planet Dove ~3.46 m/px spatial resolution means individual small sheds (<25 m²) span only 1–2 pixels.",
+        "Monthly mosaic compositing can introduce subtle seasonal illumination, agricultural phenology, and roof reflectance differences unrelated to construction.",
+        "SpaceNet 7 ground-truth polygons were manually digitized on Planet imagery and may omit minor auxiliary structures or have 1–2 pixel boundary offsets."
+      ]
+    },
+    {
+      "id": "sn7-test-02",
+      "aoiId": "L15-1296E-1198N_5184_3399_13",
+      "title": "West Abdullah Al-Mubarak, Kuwait",
+      "regionLabel": "West Abdullah Al-Mubarak, Kuwait",
+      "split": "test",
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "intervalMonths": 24,
+      "earlierImageUrl": "/data/spacenet7/images/sn7-test-02_2018_01_earlier.png",
+      "laterImageUrl": "/data/spacenet7/images/sn7-test-02_2020_01_later.png",
+      "earlierSourceS3Key": "spacenet/SN7_buildings/train/L15-1296E-1198N_5184_3399_13/images_masked/global_monthly_2018_01_mosaic_L15-1296E-1198N_5184_3399_13.tif",
+      "laterSourceS3Key": "spacenet/SN7_buildings/train/L15-1296E-1198N_5184_3399_13/images_masked/global_monthly_2020_01_mosaic_L15-1296E-1198N_5184_3399_13.tif",
+      "earlierLabelS3Key": "spacenet/SN7_buildings/train/L15-1296E-1198N_5184_3399_13/labels_match_pix/global_monthly_2018_01_mosaic_L15-1296E-1198N_5184_3399_13_Buildings.geojson",
+      "laterLabelS3Key": "spacenet/SN7_buildings/train/L15-1296E-1198N_5184_3399_13/labels_match_pix/global_monthly_2020_01_mosaic_L15-1296E-1198N_5184_3399_13_Buildings.geojson",
+      "sourceDataset": "SpaceNet 7 Multi-Temporal Urban Development Dataset (SN7)",
+      "sourceUrl": "https://spacenet.ai/sn7-challenge/",
+      "sourceAttribution": "SpaceNet Partners & Planet Labs Inc. (Global Monthly Basemaps, CC-BY-4.0)",
+      "license": "CC-BY-4.0",
+      "isSyntheticFallback": false,
+      "spatial": {
+        "crs": "EPSG:3857",
+        "bboxMercator": [
+          5324909.14,
+          3404815.77,
+          5327355.12,
+          3407261.75
+        ],
+        "centerWgs84": {
+          "lat": 29.23851,
+          "lon": 47.84546
+        },
+        "gsdMetersPerPx": 4.168,
+        "tileAreaKm2": 4.554,
+        "cropWindow": {
+          "x0": 512,
+          "y0": 511,
+          "width": 512,
+          "height": 512,
+          "sourceWidth": 1024,
+          "sourceHeight": 1024
+        }
+      },
+      "groundTruth": {
+        "available": true,
+        "earlierCount": 113,
+        "laterCount": 2411,
+        "newConstructionCount": 2315,
+        "removedCount": 17,
+        "persistentCount": 96,
+        "earlierCoveragePct": 0.47,
+        "laterCoveragePct": 12.91,
+        "netCoverageDeltaPct": 12.44,
+        "newConstructionAreaM2": 568863.9,
+        "groundTruthPositive": true,
+        "groundTruthClassLabel": "Building-Related Change Present",
+        "footprintsUrl": "/data/spacenet7/footprints/sn7-test-02_footprints.json"
+      },
+      "knownLimitations": [
+        "Planet Dove ~4.17 m/px spatial resolution means individual small sheds (<25 m²) span only 1–2 pixels.",
+        "Monthly mosaic compositing can introduce subtle seasonal illumination, agricultural phenology, and roof reflectance differences unrelated to construction.",
+        "SpaceNet 7 ground-truth polygons were manually digitized on Planet imagery and may omit minor auxiliary structures or have 1–2 pixel boundary offsets."
+      ]
+    },
+    {
+      "id": "sn7-test-03",
+      "aoiId": "L15-1848E-0793N_7394_5018_13",
+      "title": "Northern Growth Corridor, Melbourne, Australia",
+      "regionLabel": "Northern Growth Corridor, Melbourne, Australia",
+      "split": "test",
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "intervalMonths": 24,
+      "earlierImageUrl": "/data/spacenet7/images/sn7-test-03_2018_01_earlier.png",
+      "laterImageUrl": "/data/spacenet7/images/sn7-test-03_2020_01_later.png",
+      "earlierSourceS3Key": "spacenet/SN7_buildings/train/L15-1848E-0793N_7394_5018_13/images_masked/global_monthly_2018_01_mosaic_L15-1848E-0793N_7394_5018_13.tif",
+      "laterSourceS3Key": "spacenet/SN7_buildings/train/L15-1848E-0793N_7394_5018_13/images_masked/global_monthly_2020_01_mosaic_L15-1848E-0793N_7394_5018_13.tif",
+      "earlierLabelS3Key": "spacenet/SN7_buildings/train/L15-1848E-0793N_7394_5018_13/labels_match_pix/global_monthly_2018_01_mosaic_L15-1848E-0793N_7394_5018_13_Buildings.geojson",
+      "laterLabelS3Key": "spacenet/SN7_buildings/train/L15-1848E-0793N_7394_5018_13/labels_match_pix/global_monthly_2020_01_mosaic_L15-1848E-0793N_7394_5018_13_Buildings.geojson",
+      "sourceDataset": "SpaceNet 7 Multi-Temporal Urban Development Dataset (SN7)",
+      "sourceUrl": "https://spacenet.ai/sn7-challenge/",
+      "sourceAttribution": "SpaceNet Partners & Planet Labs Inc. (Global Monthly Basemaps, CC-BY-4.0)",
+      "license": "CC-BY-4.0",
+      "isSyntheticFallback": false,
+      "spatial": {
+        "crs": "EPSG:3857",
+        "bboxMercator": [
+          16136162.42,
+          -4515283.36,
+          16138608.4,
+          -4512837.37
+        ],
+        "centerWgs84": {
+          "lat": -37.53583,
+          "lon": 144.9646
+        },
+        "gsdMetersPerPx": 3.789,
+        "tileAreaKm2": 3.763,
+        "cropWindow": {
+          "x0": 512,
+          "y0": 511,
+          "width": 512,
+          "height": 512,
+          "sourceWidth": 1024,
+          "sourceHeight": 1024
+        }
+      },
+      "groundTruth": {
+        "available": true,
+        "earlierCount": 459,
+        "laterCount": 1163,
+        "newConstructionCount": 706,
+        "removedCount": 2,
+        "persistentCount": 457,
+        "earlierCoveragePct": 2.39,
+        "laterCoveragePct": 5.65,
+        "netCoverageDeltaPct": 3.26,
+        "newConstructionAreaM2": 122901.1,
+        "groundTruthPositive": true,
+        "groundTruthClassLabel": "Building-Related Change Present",
+        "footprintsUrl": "/data/spacenet7/footprints/sn7-test-03_footprints.json"
+      },
+      "knownLimitations": [
+        "Planet Dove ~3.79 m/px spatial resolution means individual small sheds (<25 m²) span only 1–2 pixels.",
+        "Monthly mosaic compositing can introduce subtle seasonal illumination, agricultural phenology, and roof reflectance differences unrelated to construction.",
+        "SpaceNet 7 ground-truth polygons were manually digitized on Planet imagery and may omit minor auxiliary structures or have 1–2 pixel boundary offsets."
+      ]
+    },
+    {
+      "id": "sn7-test-04",
+      "aoiId": "L15-0566E-1185N_2265_3451_13",
+      "title": "Port St. Lucie Corridor, Florida, USA",
+      "regionLabel": "Port St. Lucie Corridor, Florida, USA",
+      "split": "test",
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "intervalMonths": 24,
+      "earlierImageUrl": "/data/spacenet7/images/sn7-test-04_2018_01_earlier.png",
+      "laterImageUrl": "/data/spacenet7/images/sn7-test-04_2020_01_later.png",
+      "earlierSourceS3Key": "spacenet/SN7_buildings/train/L15-0566E-1185N_2265_3451_13/images_masked/global_monthly_2018_01_mosaic_L15-0566E-1185N_2265_3451_13.tif",
+      "laterSourceS3Key": "spacenet/SN7_buildings/train/L15-0566E-1185N_2265_3451_13/images_masked/global_monthly_2020_01_mosaic_L15-0566E-1185N_2265_3451_13.tif",
+      "earlierLabelS3Key": "spacenet/SN7_buildings/train/L15-0566E-1185N_2265_3451_13/labels_match_pix/global_monthly_2018_01_mosaic_L15-0566E-1185N_2265_3451_13_Buildings.geojson",
+      "laterLabelS3Key": "spacenet/SN7_buildings/train/L15-0566E-1185N_2265_3451_13/labels_match_pix/global_monthly_2020_01_mosaic_L15-0566E-1185N_2265_3451_13_Buildings.geojson",
+      "sourceDataset": "SpaceNet 7 Multi-Temporal Urban Development Dataset (SN7)",
+      "sourceUrl": "https://spacenet.ai/sn7-challenge/",
+      "sourceAttribution": "SpaceNet Partners & Planet Labs Inc. (Global Monthly Basemaps, CC-BY-4.0)",
+      "license": "CC-BY-4.0",
+      "isSyntheticFallback": false,
+      "spatial": {
+        "crs": "EPSG:3857",
+        "bboxMercator": [
+          -8957196.72,
+          3152874.54,
+          -8954750.74,
+          3155320.53
+        ],
+        "centerWgs84": {
+          "lat": 27.24486,
+          "lon": -80.45288
+        },
+        "gsdMetersPerPx": 4.248,
+        "tileAreaKm2": 4.731,
+        "cropWindow": {
+          "x0": 0,
+          "y0": 0,
+          "width": 512,
+          "height": 512,
+          "sourceWidth": 1024,
+          "sourceHeight": 1024
+        }
+      },
+      "groundTruth": {
+        "available": true,
+        "earlierCount": 4,
+        "laterCount": 72,
+        "newConstructionCount": 68,
+        "removedCount": 0,
+        "persistentCount": 4,
+        "earlierCoveragePct": 0.01,
+        "laterCoveragePct": 0.32,
+        "netCoverageDeltaPct": 0.31,
+        "newConstructionAreaM2": 14772.6,
+        "groundTruthPositive": true,
+        "groundTruthClassLabel": "Building-Related Change Present",
+        "footprintsUrl": "/data/spacenet7/footprints/sn7-test-04_footprints.json"
+      },
+      "knownLimitations": [
+        "Planet Dove ~4.25 m/px spatial resolution means individual small sheds (<25 m²) span only 1–2 pixels.",
+        "Monthly mosaic compositing can introduce subtle seasonal illumination, agricultural phenology, and roof reflectance differences unrelated to construction.",
+        "SpaceNet 7 ground-truth polygons were manually digitized on Planet imagery and may omit minor auxiliary structures or have 1–2 pixel boundary offsets."
+      ]
+    },
+    {
+      "id": "sn7-test-05",
+      "aoiId": "L15-1049E-1370N_4196_2710_13",
+      "title": "Rotterdam Polder & Urban Fringe, Netherlands",
+      "regionLabel": "Rotterdam Polder & Urban Fringe, Netherlands",
+      "split": "test",
+      "earlierDate": "2018-04",
+      "laterDate": "2018-08",
+      "intervalMonths": 4,
+      "earlierImageUrl": "/data/spacenet7/images/sn7-test-05_2018_04_earlier.png",
+      "laterImageUrl": "/data/spacenet7/images/sn7-test-05_2018_08_later.png",
+      "earlierSourceS3Key": "spacenet/SN7_buildings/train/L15-1049E-1370N_4196_2710_13/images_masked/global_monthly_2018_04_mosaic_L15-1049E-1370N_4196_2710_13.tif",
+      "laterSourceS3Key": "spacenet/SN7_buildings/train/L15-1049E-1370N_4196_2710_13/images_masked/global_monthly_2018_08_mosaic_L15-1049E-1370N_4196_2710_13.tif",
+      "earlierLabelS3Key": "spacenet/SN7_buildings/train/L15-1049E-1370N_4196_2710_13/labels_match_pix/global_monthly_2018_04_mosaic_L15-1049E-1370N_4196_2710_13_Buildings.geojson",
+      "laterLabelS3Key": "spacenet/SN7_buildings/train/L15-1049E-1370N_4196_2710_13/labels_match_pix/global_monthly_2018_08_mosaic_L15-1049E-1370N_4196_2710_13_Buildings.geojson",
+      "sourceDataset": "SpaceNet 7 Multi-Temporal Urban Development Dataset (SN7)",
+      "sourceUrl": "https://spacenet.ai/sn7-challenge/",
+      "sourceAttribution": "SpaceNet Partners & Planet Labs Inc. (Global Monthly Basemaps, CC-BY-4.0)",
+      "license": "CC-BY-4.0",
+      "isSyntheticFallback": false,
+      "spatial": {
+        "crs": "EPSG:3857",
+        "bboxMercator": [
+          490419.97,
+          6776605.96,
+          492865.96,
+          6779051.94
+        ],
+        "centerWgs84": {
+          "lat": 51.87652,
+          "lon": 4.4165
+        },
+        "gsdMetersPerPx": 2.949,
+        "tileAreaKm2": 2.28,
+        "cropWindow": {
+          "x0": 256,
+          "y0": 255,
+          "width": 512,
+          "height": 512,
+          "sourceWidth": 1024,
+          "sourceHeight": 1024
+        }
+      },
+      "groundTruth": {
+        "available": true,
+        "earlierCount": 50,
+        "laterCount": 48,
+        "newConstructionCount": 0,
+        "removedCount": 2,
+        "persistentCount": 48,
+        "earlierCoveragePct": 9.24,
+        "laterCoveragePct": 9.18,
+        "netCoverageDeltaPct": -0.06,
+        "newConstructionAreaM2": 0,
+        "groundTruthPositive": false,
+        "groundTruthClassLabel": "Little or No Building-Related Change",
+        "footprintsUrl": "/data/spacenet7/footprints/sn7-test-05_footprints.json"
+      },
+      "knownLimitations": [
+        "Planet Dove ~2.95 m/px spatial resolution means individual small sheds (<25 m²) span only 1–2 pixels.",
+        "Monthly mosaic compositing can introduce subtle seasonal illumination, agricultural phenology, and roof reflectance differences unrelated to construction.",
+        "SpaceNet 7 ground-truth polygons were manually digitized on Planet imagery and may omit minor auxiliary structures or have 1–2 pixel boundary offsets."
+      ]
+    },
+    {
+      "id": "sn7-test-06",
+      "aoiId": "L15-0595E-1278N_2383_3079_13",
+      "title": "Lehigh Valley Agricultural Fringe, Pennsylvania, USA",
+      "regionLabel": "Lehigh Valley Agricultural Fringe, Pennsylvania, USA",
+      "split": "test",
+      "earlierDate": "2018-04",
+      "laterDate": "2018-08",
+      "intervalMonths": 4,
+      "earlierImageUrl": "/data/spacenet7/images/sn7-test-06_2018_04_earlier.png",
+      "laterImageUrl": "/data/spacenet7/images/sn7-test-06_2018_08_later.png",
+      "earlierSourceS3Key": "spacenet/SN7_buildings/train/L15-0595E-1278N_2383_3079_13/images_masked/global_monthly_2018_04_mosaic_L15-0595E-1278N_2383_3079_13.tif",
+      "laterSourceS3Key": "spacenet/SN7_buildings/train/L15-0595E-1278N_2383_3079_13/images_masked/global_monthly_2018_08_mosaic_L15-0595E-1278N_2383_3079_13.tif",
+      "earlierLabelS3Key": "spacenet/SN7_buildings/train/L15-0595E-1278N_2383_3079_13/labels_match_pix/global_monthly_2018_04_mosaic_L15-0595E-1278N_2383_3079_13_Buildings.geojson",
+      "laterLabelS3Key": "spacenet/SN7_buildings/train/L15-0595E-1278N_2383_3079_13/labels_match_pix/global_monthly_2018_08_mosaic_L15-0595E-1278N_2383_3079_13_Buildings.geojson",
+      "sourceDataset": "SpaceNet 7 Multi-Temporal Urban Development Dataset (SN7)",
+      "sourceUrl": "https://spacenet.ai/sn7-challenge/",
+      "sourceAttribution": "SpaceNet Partners & Planet Labs Inc. (Global Monthly Basemaps, CC-BY-4.0)",
+      "license": "CC-BY-4.0",
+      "isSyntheticFallback": false,
+      "spatial": {
+        "crs": "EPSG:3857",
+        "bboxMercator": [
+          -8379944.28,
+          4972687.31,
+          -8377498.3,
+          4975133.3
+        ],
+        "centerWgs84": {
+          "lat": 40.73893,
+          "lon": -75.26733
+        },
+        "gsdMetersPerPx": 3.62,
+        "tileAreaKm2": 3.435,
+        "cropWindow": {
+          "x0": 0,
+          "y0": 0,
+          "width": 512,
+          "height": 512,
+          "sourceWidth": 1024,
+          "sourceHeight": 1024
+        }
+      },
+      "groundTruth": {
+        "available": true,
+        "earlierCount": 253,
+        "laterCount": 254,
+        "newConstructionCount": 1,
+        "removedCount": 0,
+        "persistentCount": 253,
+        "earlierCoveragePct": 9.22,
+        "laterCoveragePct": 9.23,
+        "netCoverageDeltaPct": 0.01,
+        "newConstructionAreaM2": 245.2,
+        "groundTruthPositive": false,
+        "groundTruthClassLabel": "Little or No Building-Related Change",
+        "footprintsUrl": "/data/spacenet7/footprints/sn7-test-06_footprints.json"
+      },
+      "knownLimitations": [
+        "Planet Dove ~3.62 m/px spatial resolution means individual small sheds (<25 m²) span only 1–2 pixels.",
+        "Monthly mosaic compositing can introduce subtle seasonal illumination, agricultural phenology, and roof reflectance differences unrelated to construction.",
+        "SpaceNet 7 ground-truth polygons were manually digitized on Planet imagery and may omit minor auxiliary structures or have 1–2 pixel boundary offsets."
+      ]
+    },
+    {
+      "id": "sn7-test-07",
+      "aoiId": "L15-0434E-1218N_1736_3318_13",
+      "title": "Permian Basin Semi-Arid Fringe, New Mexico, USA",
+      "regionLabel": "Permian Basin Semi-Arid Fringe, New Mexico, USA",
+      "split": "test",
+      "earlierDate": "2018-04",
+      "laterDate": "2018-08",
+      "intervalMonths": 4,
+      "earlierImageUrl": "/data/spacenet7/images/sn7-test-07_2018_04_earlier.png",
+      "laterImageUrl": "/data/spacenet7/images/sn7-test-07_2018_08_later.png",
+      "earlierSourceS3Key": "spacenet/SN7_buildings/train/L15-0434E-1218N_1736_3318_13/images_masked/global_monthly_2018_04_mosaic_L15-0434E-1218N_1736_3318_13.tif",
+      "laterSourceS3Key": "spacenet/SN7_buildings/train/L15-0434E-1218N_1736_3318_13/images_masked/global_monthly_2018_08_mosaic_L15-0434E-1218N_1736_3318_13.tif",
+      "earlierLabelS3Key": "spacenet/SN7_buildings/train/L15-0434E-1218N_1736_3318_13/labels_match_pix/global_monthly_2018_04_mosaic_L15-0434E-1218N_1736_3318_13_Buildings.geojson",
+      "laterLabelS3Key": "spacenet/SN7_buildings/train/L15-0434E-1218N_1736_3318_13/labels_match_pix/global_monthly_2018_08_mosaic_L15-0434E-1218N_1736_3318_13_Buildings.geojson",
+      "sourceDataset": "SpaceNet 7 Multi-Temporal Urban Development Dataset (SN7)",
+      "sourceUrl": "https://spacenet.ai/sn7-challenge/",
+      "sourceAttribution": "SpaceNet Partners & Planet Labs Inc. (Global Monthly Basemaps, CC-BY-4.0)",
+      "license": "CC-BY-4.0",
+      "isSyntheticFallback": false,
+      "spatial": {
+        "crs": "EPSG:3857",
+        "bboxMercator": [
+          -11542607.54,
+          3803506.53,
+          -11540161.56,
+          3805952.51
+        ],
+        "centerWgs84": {
+          "lat": 32.31499,
+          "lon": -103.67802
+        },
+        "gsdMetersPerPx": 4.038,
+        "tileAreaKm2": 4.274,
+        "cropWindow": {
+          "x0": 511,
+          "y0": 0,
+          "width": 512,
+          "height": 512,
+          "sourceWidth": 1023,
+          "sourceHeight": 1024
+        }
+      },
+      "groundTruth": {
+        "available": true,
+        "earlierCount": 5,
+        "laterCount": 5,
+        "newConstructionCount": 0,
+        "removedCount": 0,
+        "persistentCount": 5,
+        "earlierCoveragePct": 0.02,
+        "laterCoveragePct": 0.02,
+        "netCoverageDeltaPct": 0,
+        "newConstructionAreaM2": 0,
+        "groundTruthPositive": false,
+        "groundTruthClassLabel": "Little or No Building-Related Change",
+        "footprintsUrl": "/data/spacenet7/footprints/sn7-test-07_footprints.json"
+      },
+      "knownLimitations": [
+        "Planet Dove ~4.04 m/px spatial resolution means individual small sheds (<25 m²) span only 1–2 pixels.",
+        "Monthly mosaic compositing can introduce subtle seasonal illumination, agricultural phenology, and roof reflectance differences unrelated to construction.",
+        "SpaceNet 7 ground-truth polygons were manually digitized on Planet imagery and may omit minor auxiliary structures or have 1–2 pixel boundary offsets."
+      ]
+    },
+    {
+      "id": "sn7-test-08",
+      "aoiId": "L15-1389E-1284N_5557_3054_13",
+      "title": "Bukhara Oasis Fringe, Uzbekistan",
+      "regionLabel": "Bukhara Oasis Fringe, Uzbekistan",
+      "split": "test",
+      "earlierDate": "2018-05",
+      "laterDate": "2018-09",
+      "intervalMonths": 4,
+      "earlierImageUrl": "/data/spacenet7/images/sn7-test-08_2018_05_earlier.png",
+      "laterImageUrl": "/data/spacenet7/images/sn7-test-08_2018_09_later.png",
+      "earlierSourceS3Key": "spacenet/SN7_buildings/train/L15-1389E-1284N_5557_3054_13/images_masked/global_monthly_2018_05_mosaic_L15-1389E-1284N_5557_3054_13.tif",
+      "laterSourceS3Key": "spacenet/SN7_buildings/train/L15-1389E-1284N_5557_3054_13/images_masked/global_monthly_2018_09_mosaic_L15-1389E-1284N_5557_3054_13.tif",
+      "earlierLabelS3Key": "spacenet/SN7_buildings/train/L15-1389E-1284N_5557_3054_13/labels_match_pix/global_monthly_2018_05_mosaic_L15-1389E-1284N_5557_3054_13_Buildings.geojson",
+      "laterLabelS3Key": "spacenet/SN7_buildings/train/L15-1389E-1284N_5557_3054_13/labels_match_pix/global_monthly_2018_09_mosaic_L15-1389E-1284N_5557_3054_13_Buildings.geojson",
+      "sourceDataset": "SpaceNet 7 Multi-Temporal Urban Development Dataset (SN7)",
+      "sourceUrl": "https://spacenet.ai/sn7-challenge/",
+      "sourceAttribution": "SpaceNet Partners & Planet Labs Inc. (Global Monthly Basemaps, CC-BY-4.0)",
+      "license": "CC-BY-4.0",
+      "isSyntheticFallback": false,
+      "spatial": {
+        "crs": "EPSG:3857",
+        "bboxMercator": [
+          7149613.88,
+          5092545.35,
+          7152059.86,
+          5094991.33
+        ],
+        "centerWgs84": {
+          "lat": 41.54973,
+          "lon": 64.23706
+        },
+        "gsdMetersPerPx": 3.575,
+        "tileAreaKm2": 3.35,
+        "cropWindow": {
+          "x0": 512,
+          "y0": 511,
+          "width": 512,
+          "height": 512,
+          "sourceWidth": 1024,
+          "sourceHeight": 1024
+        }
+      },
+      "groundTruth": {
+        "available": true,
+        "earlierCount": 0,
+        "laterCount": 0,
+        "newConstructionCount": 0,
+        "removedCount": 0,
+        "persistentCount": 0,
+        "earlierCoveragePct": 0,
+        "laterCoveragePct": 0,
+        "netCoverageDeltaPct": 0,
+        "newConstructionAreaM2": 0,
+        "groundTruthPositive": false,
+        "groundTruthClassLabel": "Little or No Building-Related Change",
+        "footprintsUrl": "/data/spacenet7/footprints/sn7-test-08_footprints.json"
+      },
+      "knownLimitations": [
+        "Planet Dove ~3.58 m/px spatial resolution means individual small sheds (<25 m²) span only 1–2 pixels.",
+        "Monthly mosaic compositing can introduce subtle seasonal illumination, agricultural phenology, and roof reflectance differences unrelated to construction.",
+        "SpaceNet 7 ground-truth polygons were manually digitized on Planet imagery and may omit minor auxiliary structures or have 1–2 pixel boundary offsets."
+      ]
+    }
+  ]
+}

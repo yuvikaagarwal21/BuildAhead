@@ -1,0 +1,819 @@
+{
+  "modelType": "l2_logistic_regression",
+  "isCalibratedModel": true,
+  "version": "1.0.0",
+  "trainedAt": "2026-10-26T05:50:25.243Z",
+  "datasetSource": "Official SpaceNet 7 Multi-Temporal Urban Development Dataset (s3://spacenet-dataset/spacenet/SN7_buildings/train/)",
+  "positiveCriterion": " Ground-truth SpaceNet 7 annotations show >= 12 newly constructed building footprints AND >= 1,500 m² new building footprint area within the 512x512 sub-tile.",
+  "negativeCriterion": "Ground-truth SpaceNet 7 annotations show <= 2 newly constructed or removed building footprints AND <= 350 m² new building area within the 512x512 sub-tile.",
+  "leakagePrevention": "Strict AOI-level geographic split: at most one 512x512 sub-tile extracted per SpaceNet 7 AOI, with all training AOIs geographically disjoint from all held-out test AOIs.",
+  "minTrainTestDistanceKm": 425.4,
+  "l2RegularizationLambda": 1,
+  "featureNames": [
+    "structuralChangePct",
+    "highAlbedoGainPct",
+    "meanClusterEdgeGain",
+    "compactClusterDensityKm2",
+    "seasonalVegShiftFraction"
+  ],
+  "featureDefinitions": {
+    "structuralChangePct": {
+      "label": "Filtered Structural Change Area",
+      "unit": "% of valid tile",
+      "description": "Percentage of cloud-free pixels retained in candidate change clusters after radiometric normalization, vegetation suppression, shadow filtering, and morphological opening."
+    },
+    "highAlbedoGainPct": {
+      "label": "Non-Vegetated Bright Surface Gain",
+      "unit": "% of valid tile",
+      "description": "Percentage of valid pixels transitioning toward brighter, low-greenness reflectance characteristic of new roofs, concrete pads, or graded construction earthworks."
+    },
+    "meanClusterEdgeGain": {
+      "label": "Rectilinear Sobel Edge Gain",
+      "unit": "gradient units",
+      "description": "Area-weighted positive increase in 3x3 Sobel spatial gradient magnitude across candidate change regions, capturing newly introduced roof and road boundaries."
+    },
+    "compactClusterDensityKm2": {
+      "label": "Compact Candidate Cluster Density",
+      "unit": "clusters / km²",
+      "description": "Spatial density of discrete, compact candidate change regions (10–1400 px area) per square kilometer, distinguishing localized structures from broad illumination washes."
+    },
+    "seasonalVegShiftFraction": {
+      "label": "Seasonal Vegetation Shift Ratio",
+      "unit": "0–1 ratio",
+      "description": "Fraction of raw spectral pixel differences attributable to Excess-Green (2G - R - B) phenology changes such as crop growth or seasonal grass greening."
+    }
+  },
+  "scalerMean": [
+    6.576631,
+    5.302404,
+    7.837792,
+    25.796796,
+    0.412365
+  ],
+  "scalerStd": [
+    7.372592,
+    4.968533,
+    3.963291,
+    20.056897,
+    0.241321
+  ],
+  "weights": [
+    0.203322,
+    -0.340296,
+    0.872609,
+    0.395662,
+    -0.297721
+  ],
+  "intercept": 0.224997,
+  "decisionThreshold": 0.5,
+  "trainMetrics": {
+    "sampleCount": 26,
+    "positiveCount": 14,
+    "negativeCount": 12,
+    "accuracy": 0.6923,
+    "precision": 0.7143,
+    "recall": 0.7143,
+    "f1Score": 0.7143,
+    "brierScore": 0.1881,
+    "rocAuc": 0.7738,
+    "confusionMatrix": {
+      "tp": 10,
+      "fp": 4,
+      "tn": 8,
+      "fn": 4
+    }
+  },
+  "testMetrics": {
+    "sampleCount": 8,
+    "positiveCount": 4,
+    "negativeCount": 4,
+    "accuracy": 0.875,
+    "precision": 0.8,
+    "recall": 1,
+    "f1Score": 0.8889,
+    "brierScore": 0.2126,
+    "rocAuc": 0.75,
+    "confusionMatrix": {
+      "tp": 4,
+      "fp": 1,
+      "tn": 3,
+      "fn": 0
+    }
+  },
+  "records": [
+    {
+      "pairId": "sn7-test-01",
+      "aoiId": "L15-0361E-1300N_1446_2989_13",
+      "split": "test",
+      "lat": 43.65201,
+      "lon": -116.44409,
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "newBuildings": 409,
+      "newBuildingAreaM2": 74478.1,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 8.1177,
+        "highAlbedoGainPct": 3.7064,
+        "meanClusterEdgeGain": 3.8059,
+        "compactClusterDensityKm2": 50.1432,
+        "seasonalVegShiftFraction": 0.0026
+      },
+      "predictedProbability": 0.6165,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-test-02",
+      "aoiId": "L15-1296E-1198N_5184_3399_13",
+      "split": "test",
+      "lat": 29.23851,
+      "lon": 47.84546,
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "newBuildings": 2315,
+      "newBuildingAreaM2": 568863.9,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 3.5513,
+        "highAlbedoGainPct": 0.0767,
+        "meanClusterEdgeGain": 7.4159,
+        "compactClusterDensityKm2": 58.5333,
+        "seasonalVegShiftFraction": 0.7076
+      },
+      "predictedProbability": 0.6656,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-test-03",
+      "aoiId": "L15-1848E-0793N_7394_5018_13",
+      "split": "test",
+      "lat": -37.53583,
+      "lon": 144.9646,
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "newBuildings": 706,
+      "newBuildingAreaM2": 122901.1,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 13.7108,
+        "highAlbedoGainPct": 10.8833,
+        "meanClusterEdgeGain": 4.7774,
+        "compactClusterDensityKm2": 56.5966,
+        "seasonalVegShiftFraction": 0.0124
+      },
+      "predictedProbability": 0.6146,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-test-04",
+      "aoiId": "L15-0566E-1185N_2265_3451_13",
+      "split": "test",
+      "lat": 27.24486,
+      "lon": -80.45288,
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "newBuildings": 68,
+      "newBuildingAreaM2": 14772.6,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 8.7908,
+        "highAlbedoGainPct": 6.8562,
+        "meanClusterEdgeGain": 8.5365,
+        "compactClusterDensityKm2": 13.7444,
+        "seasonalVegShiftFraction": 0.3395
+      },
+      "predictedProbability": 0.5463,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-test-05",
+      "aoiId": "L15-1049E-1370N_4196_2710_13",
+      "split": "test",
+      "lat": 51.87652,
+      "lon": 4.4165,
+      "earlierDate": "2018-04",
+      "laterDate": "2018-08",
+      "newBuildings": 0,
+      "newBuildingAreaM2": 0,
+      "groundTruthPositive": false,
+      "features": {
+        "structuralChangePct": 7.9559,
+        "highAlbedoGainPct": 6.7665,
+        "meanClusterEdgeGain": 11.0255,
+        "compactClusterDensityKm2": 125.4517,
+        "seasonalVegShiftFraction": 0.2406
+      },
+      "predictedProbability": 0.9545,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-test-06",
+      "aoiId": "L15-0595E-1278N_2383_3079_13",
+      "split": "test",
+      "lat": 40.73893,
+      "lon": -75.26733,
+      "earlierDate": "2018-04",
+      "laterDate": "2018-08",
+      "newBuildings": 1,
+      "newBuildingAreaM2": 245.2,
+      "groundTruthPositive": false,
+      "features": {
+        "structuralChangePct": 4.8435,
+        "highAlbedoGainPct": 4.2591,
+        "meanClusterEdgeGain": 4.6569,
+        "compactClusterDensityKm2": 27.3634,
+        "seasonalVegShiftFraction": 0.8273
+      },
+      "predictedProbability": 0.2824,
+      "predictedPositive": false
+    },
+    {
+      "pairId": "sn7-test-07",
+      "aoiId": "L15-0434E-1218N_1736_3318_13",
+      "split": "test",
+      "lat": 32.31499,
+      "lon": -103.67802,
+      "earlierDate": "2018-04",
+      "laterDate": "2018-08",
+      "newBuildings": 0,
+      "newBuildingAreaM2": 0,
+      "groundTruthPositive": false,
+      "features": {
+        "structuralChangePct": 0.0481,
+        "highAlbedoGainPct": 0.1717,
+        "meanClusterEdgeGain": 2.151,
+        "compactClusterDensityKm2": 0.9358,
+        "seasonalVegShiftFraction": 0
+      },
+      "predictedProbability": 0.3021,
+      "predictedPositive": false
+    },
+    {
+      "pairId": "sn7-test-08",
+      "aoiId": "L15-1389E-1284N_5557_3054_13",
+      "split": "test",
+      "lat": 41.54973,
+      "lon": 64.23706,
+      "earlierDate": "2018-05",
+      "laterDate": "2018-09",
+      "newBuildings": 0,
+      "newBuildingAreaM2": 0,
+      "groundTruthPositive": false,
+      "features": {
+        "structuralChangePct": 0,
+        "highAlbedoGainPct": 0.0004,
+        "meanClusterEdgeGain": 0,
+        "compactClusterDensityKm2": 0,
+        "seasonalVegShiftFraction": 1
+      },
+      "predictedProbability": 0.0722,
+      "predictedPositive": false
+    },
+    {
+      "pairId": "sn7-train-01",
+      "aoiId": "L15-0683E-1006N_2732_4164_13",
+      "split": "train",
+      "lat": -3.0198,
+      "lon": -59.90849,
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "newBuildings": 184,
+      "newBuildingAreaM2": 27467.3,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 1.2711,
+        "highAlbedoGainPct": 1.215,
+        "meanClusterEdgeGain": 15.5135,
+        "compactClusterDensityKm2": 10.2228,
+        "seasonalVegShiftFraction": 0.8043
+      },
+      "predictedProbability": 0.7787,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-train-02",
+      "aoiId": "L15-0614E-0946N_2459_4406_13",
+      "split": "train",
+      "lat": -13.52848,
+      "lon": -71.90552,
+      "earlierDate": "2018-03",
+      "laterDate": "2020-01",
+      "newBuildings": 650,
+      "newBuildingAreaM2": 101830.1,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 5.3183,
+        "highAlbedoGainPct": 9.1398,
+        "meanClusterEdgeGain": 15.6808,
+        "compactClusterDensityKm2": 60.9713,
+        "seasonalVegShiftFraction": 0.2255
+      },
+      "predictedProbability": 0.9295,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-train-03",
+      "aoiId": "L15-1669E-1160N_6679_3549_13",
+      "split": "train",
+      "lat": 23.35234,
+      "lon": 113.52173,
+      "earlierDate": "2017-07",
+      "laterDate": "2019-09",
+      "newBuildings": 419,
+      "newBuildingAreaM2": 177084.5,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 9.545,
+        "highAlbedoGainPct": 7.1178,
+        "meanClusterEdgeGain": 7.7095,
+        "compactClusterDensityKm2": 31.6532,
+        "seasonalVegShiftFraction": 0.5669
+      },
+      "predictedProbability": 0.5198,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-train-04",
+      "aoiId": "L15-1204E-1202N_4816_3380_13",
+      "split": "train",
+      "lat": 29.97401,
+      "lon": 31.6626,
+      "earlierDate": "2017-07",
+      "laterDate": "2019-09",
+      "newBuildings": 686,
+      "newBuildingAreaM2": 325499.4,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 0.7439,
+        "highAlbedoGainPct": 0.3464,
+        "meanClusterEdgeGain": 6.9135,
+        "compactClusterDensityKm2": 6.6834,
+        "seasonalVegShiftFraction": 0.5136
+      },
+      "predictedProbability": 0.4251,
+      "predictedPositive": false
+    },
+    {
+      "pairId": "sn7-train-05",
+      "aoiId": "L15-1138E-1216N_4553_3325_13",
+      "split": "train",
+      "lat": 32.05464,
+      "lon": 20.09399,
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "newBuildings": 370,
+      "newBuildingAreaM2": 117427.3,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 7.1907,
+        "highAlbedoGainPct": 3.8181,
+        "meanClusterEdgeGain": 7.6697,
+        "compactClusterDensityKm2": 87.0234,
+        "seasonalVegShiftFraction": 0.3155
+      },
+      "predictedProbability": 0.8367,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-train-06",
+      "aoiId": "L15-0586E-1127N_2345_3680_13",
+      "split": "train",
+      "lat": 17.95787,
+      "lon": -76.92627,
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "newBuildings": 946,
+      "newBuildingAreaM2": 132137.8,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 14.1094,
+        "highAlbedoGainPct": 9.7832,
+        "meanClusterEdgeGain": 8.765,
+        "compactClusterDensityKm2": 19.5748,
+        "seasonalVegShiftFraction": 0.2803
+      },
+      "predictedProbability": 0.5915,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-train-07",
+      "aoiId": "L15-1209E-1113N_4838_3737_13",
+      "split": "train",
+      "lat": 15.57013,
+      "lon": 32.64038,
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "newBuildings": 402,
+      "newBuildingAreaM2": 51913.3,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 1.0941,
+        "highAlbedoGainPct": 2.3045,
+        "meanClusterEdgeGain": 2.802,
+        "compactClusterDensityKm2": 8.1055,
+        "seasonalVegShiftFraction": 0.2953
+      },
+      "predictedProbability": 0.2623,
+      "predictedPositive": false
+    },
+    {
+      "pairId": "sn7-train-08",
+      "aoiId": "L15-0358E-1220N_1433_3310_13",
+      "split": "train",
+      "lat": 32.6024,
+      "lon": -117.00439,
+      "earlierDate": "2018-02",
+      "laterDate": "2020-01",
+      "newBuildings": 580,
+      "newBuildingAreaM2": 113000.5,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 33.5369,
+        "highAlbedoGainPct": 20.5441,
+        "meanClusterEdgeGain": 11.6198,
+        "compactClusterDensityKm2": 53.2153,
+        "seasonalVegShiftFraction": 0.0257
+      },
+      "predictedProbability": 0.8551,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-train-09",
+      "aoiId": "L15-1015E-1062N_4061_3941_13",
+      "split": "train",
+      "lat": 6.76285,
+      "lon": -1.5271,
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "newBuildings": 227,
+      "newBuildingAreaM2": 51015.3,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 5.6168,
+        "highAlbedoGainPct": 3.9845,
+        "meanClusterEdgeGain": 10.4748,
+        "compactClusterDensityKm2": 22.3741,
+        "seasonalVegShiftFraction": 0.6531
+      },
+      "predictedProbability": 0.6236,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-train-10",
+      "aoiId": "L15-1276E-1107N_5105_3761_13",
+      "split": "train",
+      "lat": 14.55168,
+      "lon": 44.37378,
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "newBuildings": 297,
+      "newBuildingAreaM2": 51190.2,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 2.182,
+        "highAlbedoGainPct": 3.685,
+        "meanClusterEdgeGain": 4.4888,
+        "compactClusterDensityKm2": 12.6673,
+        "seasonalVegShiftFraction": 0.204
+      },
+      "predictedProbability": 0.3717,
+      "predictedPositive": false
+    },
+    {
+      "pairId": "sn7-train-11",
+      "aoiId": "L15-1335E-1166N_5342_3524_13",
+      "split": "train",
+      "lat": 24.34714,
+      "lon": 54.77783,
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "newBuildings": 221,
+      "newBuildingAreaM2": 121479.6,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 2.0962,
+        "highAlbedoGainPct": 0.0511,
+        "meanClusterEdgeGain": 13.0258,
+        "compactClusterDensityKm2": 24.5721,
+        "seasonalVegShiftFraction": 0.2281
+      },
+      "predictedProbability": 0.8589,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-train-12",
+      "aoiId": "L15-1185E-0935N_4742_4450_13",
+      "split": "train",
+      "lat": -15.40069,
+      "lon": 28.42163,
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "newBuildings": 179,
+      "newBuildingAreaM2": 51745.3,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 3.4306,
+        "highAlbedoGainPct": 3.5847,
+        "meanClusterEdgeGain": 13.8029,
+        "compactClusterDensityKm2": 33.4445,
+        "seasonalVegShiftFraction": 0.6181
+      },
+      "predictedProbability": 0.8125,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-train-13",
+      "aoiId": "L15-1709E-1112N_6838_3742_13",
+      "split": "train",
+      "lat": 15.35836,
+      "lon": 120.53101,
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "newBuildings": 419,
+      "newBuildingAreaM2": 40703.9,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 11.401,
+        "highAlbedoGainPct": 8.9378,
+        "meanClusterEdgeGain": 8.0502,
+        "compactClusterDensityKm2": 37.5638,
+        "seasonalVegShiftFraction": 0.3559
+      },
+      "predictedProbability": 0.6124,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-train-14",
+      "aoiId": "L15-1481E-1119N_5927_3715_13",
+      "split": "train",
+      "lat": 16.4993,
+      "lon": 80.49678,
+      "earlierDate": "2018-01",
+      "laterDate": "2020-01",
+      "newBuildings": 245,
+      "newBuildingAreaM2": 83625.1,
+      "groundTruthPositive": true,
+      "features": {
+        "structuralChangePct": 2.1481,
+        "highAlbedoGainPct": 1.4141,
+        "meanClusterEdgeGain": 5.6367,
+        "compactClusterDensityKm2": 17.9959,
+        "seasonalVegShiftFraction": 0.4818
+      },
+      "predictedProbability": 0.4122,
+      "predictedPositive": false
+    },
+    {
+      "pairId": "sn7-train-15",
+      "aoiId": "L15-1014E-1375N_4056_2688_13",
+      "split": "train",
+      "lat": 52.47609,
+      "lon": -1.74683,
+      "earlierDate": "2018-04",
+      "laterDate": "2018-08",
+      "newBuildings": 0,
+      "newBuildingAreaM2": 0,
+      "groundTruthPositive": false,
+      "features": {
+        "structuralChangePct": 0.573,
+        "highAlbedoGainPct": 0.5695,
+        "meanClusterEdgeGain": 9.2131,
+        "compactClusterDensityKm2": 16.2172,
+        "seasonalVegShiftFraction": 0.6252
+      },
+      "predictedProbability": 0.5584,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-train-16",
+      "aoiId": "L15-0632E-0892N_2528_4620_13",
+      "split": "train",
+      "lat": -22.46176,
+      "lon": -68.89526,
+      "earlierDate": "2018-04",
+      "laterDate": "2018-08",
+      "newBuildings": 0,
+      "newBuildingAreaM2": 0,
+      "groundTruthPositive": false,
+      "features": {
+        "structuralChangePct": 14.1323,
+        "highAlbedoGainPct": 16.1034,
+        "meanClusterEdgeGain": 3.373,
+        "compactClusterDensityKm2": 35.0309,
+        "seasonalVegShiftFraction": 0
+      },
+      "predictedProbability": 0.3547,
+      "predictedPositive": false
+    },
+    {
+      "pairId": "sn7-train-17",
+      "aoiId": "L15-0760E-0887N_3041_4643_13",
+      "split": "train",
+      "lat": -23.37251,
+      "lon": -46.35132,
+      "earlierDate": "2018-03",
+      "laterDate": "2018-06",
+      "newBuildings": 0,
+      "newBuildingAreaM2": 0,
+      "groundTruthPositive": false,
+      "features": {
+        "structuralChangePct": 0.3281,
+        "highAlbedoGainPct": 0.4471,
+        "meanClusterEdgeGain": 4.7484,
+        "compactClusterDensityKm2": 3.9678,
+        "seasonalVegShiftFraction": 0.7774
+      },
+      "predictedProbability": 0.2358,
+      "predictedPositive": false
+    },
+    {
+      "pairId": "sn7-train-18",
+      "aoiId": "L15-0487E-1246N_1950_3207_13",
+      "split": "train",
+      "lat": 36.33286,
+      "lon": -94.28467,
+      "earlierDate": "2018-04",
+      "laterDate": "2018-08",
+      "newBuildings": 0,
+      "newBuildingAreaM2": 0,
+      "groundTruthPositive": false,
+      "features": {
+        "structuralChangePct": 4.7657,
+        "highAlbedoGainPct": 4.7962,
+        "meanClusterEdgeGain": 6.2953,
+        "compactClusterDensityKm2": 4.3774,
+        "seasonalVegShiftFraction": 0.6909
+      },
+      "predictedProbability": 0.2899,
+      "predictedPositive": false
+    },
+    {
+      "pairId": "sn7-train-19",
+      "aoiId": "L15-1200E-0847N_4802_4803_13",
+      "split": "train",
+      "lat": -29.67847,
+      "lon": 31.05835,
+      "earlierDate": "2018-05",
+      "laterDate": "2018-09",
+      "newBuildings": 1,
+      "newBuildingAreaM2": 119.4,
+      "groundTruthPositive": false,
+      "features": {
+        "structuralChangePct": 9.1569,
+        "highAlbedoGainPct": 4.2614,
+        "meanClusterEdgeGain": 3.2144,
+        "compactClusterDensityKm2": 30.5519,
+        "seasonalVegShiftFraction": 0.5704
+      },
+      "predictedProbability": 0.3205,
+      "predictedPositive": false
+    },
+    {
+      "pairId": "sn7-train-20",
+      "aoiId": "L15-0924E-1108N_3699_3757_13",
+      "split": "train",
+      "lat": 14.70055,
+      "lon": -17.41333,
+      "earlierDate": "2018-04",
+      "laterDate": "2018-09",
+      "newBuildings": 0,
+      "newBuildingAreaM2": 0,
+      "groundTruthPositive": false,
+      "features": {
+        "structuralChangePct": 0.61,
+        "highAlbedoGainPct": 1.0258,
+        "meanClusterEdgeGain": 10.1783,
+        "compactClusterDensityKm2": 5.002,
+        "seasonalVegShiftFraction": 0.2502
+      },
+      "predictedProbability": 0.6589,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-train-21",
+      "aoiId": "L15-0331E-1257N_1327_3160_13",
+      "split": "train",
+      "lat": 37.9875,
+      "lon": -121.65161,
+      "earlierDate": "2018-04",
+      "laterDate": "2018-08",
+      "newBuildings": 1,
+      "newBuildingAreaM2": 88,
+      "groundTruthPositive": false,
+      "features": {
+        "structuralChangePct": 17.2264,
+        "highAlbedoGainPct": 7.2872,
+        "meanClusterEdgeGain": 1.9283,
+        "compactClusterDensityKm2": 24.476,
+        "seasonalVegShiftFraction": 0.5424
+      },
+      "predictedProbability": 0.2488,
+      "predictedPositive": false
+    },
+    {
+      "pairId": "sn7-train-22",
+      "aoiId": "L15-1748E-1247N_6993_3202_13",
+      "split": "train",
+      "lat": 36.51847,
+      "lon": 127.32056,
+      "earlierDate": "2018-04",
+      "laterDate": "2018-08",
+      "newBuildings": 0,
+      "newBuildingAreaM2": 0,
+      "groundTruthPositive": false,
+      "features": {
+        "structuralChangePct": 2.6237,
+        "highAlbedoGainPct": 3.4321,
+        "meanClusterEdgeGain": 12.8165,
+        "compactClusterDensityKm2": 11.6415,
+        "seasonalVegShiftFraction": 0.7574
+      },
+      "predictedProbability": 0.6537,
+      "predictedPositive": true
+    },
+    {
+      "pairId": "sn7-train-23",
+      "aoiId": "L15-1716E-1211N_6864_3345_13",
+      "split": "train",
+      "lat": 31.30672,
+      "lon": 121.67358,
+      "earlierDate": "2018-01",
+      "laterDate": "2018-04",
+      "newBuildings": 0,
+      "newBuildingAreaM2": 0,
+      "groundTruthPositive": false,
+      "features": {
+        "structuralChangePct": 6.5601,
+        "highAlbedoGainPct": 10.3516,
+        "meanClusterEdgeGain": 3.1501,
+        "compactClusterDensityKm2": 30.6774,
+        "seasonalVegShiftFraction": 0.0852
+      },
+      "predictedProbability": 0.3422,
+      "predictedPositive": false
+    },
+    {
+      "pairId": "sn7-train-24",
+      "aoiId": "L15-0544E-1228N_2176_3279_13",
+      "split": "train",
+      "lat": 33.73351,
+      "lon": -84.34208,
+      "earlierDate": "2018-01",
+      "laterDate": "2018-04",
+      "newBuildings": 0,
+      "newBuildingAreaM2": 0,
+      "groundTruthPositive": false,
+      "features": {
+        "structuralChangePct": 0.6657,
+        "highAlbedoGainPct": 0.7309,
+        "meanClusterEdgeGain": 7.0507,
+        "compactClusterDensityKm2": 14.7419,
+        "seasonalVegShiftFraction": 0.5386
+      },
+      "predictedProbability": 0.4571,
+      "predictedPositive": false
+    },
+    {
+      "pairId": "sn7-train-25",
+      "aoiId": "L15-1289E-1169N_5156_3514_13",
+      "split": "train",
+      "lat": 24.75681,
+      "lon": 46.59302,
+      "earlierDate": "2018-03",
+      "laterDate": "2018-06",
+      "newBuildings": 1,
+      "newBuildingAreaM2": 304.7,
+      "groundTruthPositive": false,
+      "features": {
+        "structuralChangePct": 0.5989,
+        "highAlbedoGainPct": 3.5535,
+        "meanClusterEdgeGain": 4.8338,
+        "compactClusterDensityKm2": 9.1357,
+        "seasonalVegShiftFraction": 0
+      },
+      "predictedProbability": 0.4252,
+      "predictedPositive": false
+    },
+    {
+      "pairId": "sn7-train-26",
+      "aoiId": "L15-1617E-1207N_6468_3360_13",
+      "split": "train",
+      "lat": 30.74184,
+      "lon": 104.27124,
+      "earlierDate": "2018-06",
+      "laterDate": "2018-10",
+      "newBuildings": 1,
+      "newBuildingAreaM2": 141.5,
+      "groundTruthPositive": false,
+      "features": {
+        "structuralChangePct": 14.0675,
+        "highAlbedoGainPct": 9.3777,
+        "meanClusterEdgeGain": 4.8277,
+        "compactClusterDensityKm2": 58.8296,
+        "seasonalVegShiftFraction": 0.3157
+      },
+      "predictedProbability": 0.5648,
+      "predictedPositive": true
+    }
+  ]
+}

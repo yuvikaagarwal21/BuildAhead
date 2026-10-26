@@ -1,0 +1,6 @@
+{
+  "name": "BuildAhead — Satellite-Based Construction Change Detection",
+  "description": "Multi-temporal satellite-image change detection and construction-related change classification workbench built on official SpaceNet 7 Planet Dove imagery and building-footprint annotations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
