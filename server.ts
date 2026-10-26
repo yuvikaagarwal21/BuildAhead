@@ -13,7 +13,7 @@ import type {
   RawImageBuffer,
 } from './src/types/satellite.ts';
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 const ROOT_DIR = process.cwd();
 
 function loadJsonFile<T>(relPath: string): T | null {
