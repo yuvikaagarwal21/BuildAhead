@@ -138,7 +138,7 @@ export const PreprocessingControls: React.FC<PreprocessingControlsProps> = ({
             id="slider-thresh"
             type="range"
             min={16}
-            max={52}
+            max={54}
             step={2}
             value={config.changeThreshold}
             onChange={(e) => update('changeThreshold', Number(e.target.value))}

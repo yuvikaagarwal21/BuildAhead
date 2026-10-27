@@ -7,6 +7,10 @@ import type {
   SampleManifestEntry,
 } from '../types/satellite.ts';
 import {
+  calculateAccuracyPercent,
+  formatModelAccuracyDisplay,
+} from '../lib/classifier.ts';
+import {
   downloadChangeMapPng,
   downloadComparisonCsv,
   downloadResultsJson,
@@ -27,6 +31,15 @@ export const ResultsSummaryPanel: React.FC<ResultsSummaryPanelProps> = ({
 }) => {
   const { classification: cls } = result;
   const gt = sample.groundTruth;
+
+  // Genuine held-out test set accuracy: ((TP + TN) / (TP + TN + FP + FN)) * 100
+  const heldOutTestMetrics = model?.isCalibratedModel ? model.testMetrics : null;
+  const accuracyPct = calculateAccuracyPercent(heldOutTestMetrics);
+  const accuracyDisplay = formatModelAccuracyDisplay(heldOutTestMetrics);
+  const cm = heldOutTestMetrics?.confusionMatrix;
+  const evaluatedCount = cm ? cm.tp + cm.tn + cm.fp + cm.fn : 0;
+  const splitLabel =
+    model?.evaluationSplitLabel ?? 'SpaceNet 7 Held-Out Test Split';
 
   return (
     <section
@@ -54,7 +67,7 @@ export const ResultsSummaryPanel: React.FC<ResultsSummaryPanelProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => downloadComparisonCsv(sample, config, result)}
+            onClick={() => downloadComparisonCsv(sample, config, result, model)}
             className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
             <FileSpreadsheet className="w-4 h-4" />
@@ -71,22 +84,82 @@ export const ResultsSummaryPanel: React.FC<ResultsSummaryPanelProps> = ({
         </div>
       </div>
 
-      {/* 4 Simple Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-5 border-b border-slate-200">
+      {/* Headline Metrics — Keeping Model Confidence (single pair) and Model Accuracy (held-out test set) strictly separate */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 pb-5 border-b border-slate-200">
         <div>
           <div className="text-xs text-slate-500">Predicted Category</div>
           <div
-            className={`text-base font-semibold mt-1 ${
+            className={`text-base font-semibold mt-1 leading-snug ${
               cls.predictedPositive ? 'text-amber-700' : 'text-slate-900'
             }`}
           >
             {cls.predictedCategory}
           </div>
-          <div className="text-xs font-mono tabular-nums text-slate-600 mt-1">
+          <div className="text-xs text-slate-500 mt-1">
+            {gt.groundTruthPositive === cls.predictedPositive
+              ? 'Matches SpaceNet 7 ground truth'
+              : 'Differs from SpaceNet 7 ground truth'}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-xs text-slate-500">Model Confidence</div>
+          <div
+            className={`text-2xl font-mono font-semibold tabular-nums mt-1 ${
+              cls.uncertaintyLevel === 'borderline_uncertain'
+                ? 'text-amber-700'
+                : 'text-slate-900'
+            }`}
+          >
             {cls.confidenceScore !== null
-              ? `Model confidence: ${(cls.confidenceScore * 100).toFixed(1)}%`
+              ? `${(cls.confidenceScore * 100).toFixed(1)}%`
+              : 'Unscored'}
+          </div>
+          <div className="text-xs font-mono tabular-nums text-slate-600 mt-1">
+            {cls.probabilityBuildingChange !== null
+              ? `This pair · P(bldg) ${(cls.probabilityBuildingChange * 100).toFixed(1)}%`
               : 'Rule-based screening'}
           </div>
+          {cls.confidenceScore !== null && (
+            <div
+              className={`text-[11px] mt-0.5 ${
+                cls.uncertaintyLevel === 'borderline_uncertain'
+                  ? 'text-amber-700 font-medium'
+                  : 'text-slate-500'
+              }`}
+            >
+              {cls.uncertaintyLevel === 'borderline_uncertain'
+                ? 'Borderline / uncertain — inspect overlay'
+                : cls.uncertaintyLevel === 'moderate_certainty'
+                ? 'Moderate calibrated certainty'
+                : 'Platt-calibrated (Non-Test OOF)'}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <div className="text-xs text-slate-500">Model Accuracy</div>
+          <div className="text-2xl font-mono font-semibold tabular-nums text-blue-700 mt-1">
+            {accuracyDisplay}
+          </div>
+          <div className="text-xs font-mono tabular-nums text-slate-600 mt-1">
+            {accuracyPct !== null && cm
+              ? `${cm.tp + cm.tn}/${evaluatedCount} correct (n=${evaluatedCount}) · ${splitLabel.replace(
+                  'SpaceNet 7 ',
+                  ''
+                )}`
+              : 'No held-out evaluation split loaded'}
+          </div>
+          {accuracyPct !== null && heldOutTestMetrics?.accuracyCi95 && (
+            <div className="text-[11px] font-mono tabular-nums text-slate-500 mt-0.5">
+              95% Wilson CI:{' '}
+              {(heldOutTestMetrics.accuracyCi95[0] * 100).toFixed(1)}%–
+              {(heldOutTestMetrics.accuracyCi95[1] * 100).toFixed(1)}%
+              {model?.geoCvMetrics
+                ? ` · 5-Fold Geo-CV ${(model.geoCvMetrics.accuracy * 100).toFixed(1)}% (n=${model.geoCvMetrics.sampleCount})`
+                : ''}
+            </div>
+          )}
         </div>
 
         <div>
@@ -96,7 +169,11 @@ export const ResultsSummaryPanel: React.FC<ResultsSummaryPanelProps> = ({
           </div>
           <div className="text-xs font-mono tabular-nums text-slate-600 mt-1">
             {result.candidatePixelCount.toLocaleString()} px ·{' '}
-            {result.regions.length} highlighted regions
+            {result.regions.length} regions
+            {result.pixelChangeIoU !== null &&
+            result.pixelChangeIoU !== undefined
+              ? ` · IoU ${result.pixelChangeIoU.toFixed(2)}`
+              : ''}
           </div>
         </div>
 
@@ -109,17 +186,7 @@ export const ResultsSummaryPanel: React.FC<ResultsSummaryPanelProps> = ({
           </div>
           <div className="text-xs font-mono tabular-nums text-slate-600 mt-1">
             {gt.earlierCount.toLocaleString()} → {gt.laterCount.toLocaleString()}{' '}
-            labelled footprints
-          </div>
-        </div>
-
-        <div>
-          <div className="text-xs text-slate-500">Building Coverage</div>
-          <div className="text-2xl font-mono font-semibold tabular-nums text-slate-900 mt-1">
-            {gt.earlierCoveragePct.toFixed(1)}% → {gt.laterCoveragePct.toFixed(1)}%
-          </div>
-          <div className="text-xs font-mono tabular-nums text-slate-600 mt-1">
-            +{gt.newConstructionAreaM2.toLocaleString()} m² new footprint area
+            bldgs · +{gt.newConstructionAreaM2.toLocaleString()} m²
           </div>
         </div>
       </div>
@@ -132,7 +199,7 @@ export const ResultsSummaryPanel: React.FC<ResultsSummaryPanelProps> = ({
           </h3>
           <p>{cls.explanation}</p>
           <p className="mt-1.5">
-            Seasonal and shadow filtering suppressed{' '}
+            Seasonal, snow, and smooth-shadow filtering suppressed{' '}
             <span className="font-mono tabular-nums font-medium text-slate-800">
               {result.suppressedEnvPct.toFixed(2)}%
             </span>{' '}
@@ -142,13 +209,19 @@ export const ResultsSummaryPanel: React.FC<ResultsSummaryPanelProps> = ({
 
         <div>
           <h3 className="text-xs font-semibold text-slate-900 mb-1">
-            Important Limitations
+            Important Limitations &amp; Small-Sample Uncertainty
           </h3>
           <p>
-            Not every pixel difference indicates construction: seasonal crops, bare
-            soil grading, shadows, or roof glare can cause visible changes at ~4.8 m/px
-            resolution. In addition, detecting historical changes between two dates
-            does not predict future construction.
+            <strong>Model Confidence</strong> reflects Platt-calibrated
+            probability on this single tile (fitted strictly on n = 59 non-test
+            out-of-fold logits; borderline pairs near the decision boundary are
+            reported honestly rather than inflated), whereas{' '}
+            <strong>Model Accuracy</strong> measures overall correctness on the
+            untouched {evaluatedCount > 0 ? `n = ${evaluatedCount}` : 'held-out'}{' '}
+            geographic test split (±8.3% per sample) and{' '}
+            <strong>Candidate Changed Pixels</strong> measures pixel-level mask
+            coverage. Historical change detection does not predict future
+            construction.
           </p>
         </div>
       </div>

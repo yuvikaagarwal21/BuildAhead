@@ -6,7 +6,12 @@ import {
   DEFAULT_PREPROCESSING_CONFIG,
   runChangeDetectionPipeline,
 } from './src/lib/changeDetection.ts';
+import {
+  calculateAccuracyPercent,
+  formatModelAccuracyDisplay,
+} from './src/lib/classifier.ts';
 import type {
+  BuildingFootprintPolygon,
   DatasetManifest,
   ModelArtifact,
   PreprocessingConfig,
@@ -45,11 +50,18 @@ async function startServer() {
   app.get('/api/health', (_req, res) => {
     const manifest = loadJsonFile<DatasetManifest>('public/data/spacenet7/manifest.json');
     const model = loadJsonFile<ModelArtifact>('src/data/modelArtifact.json');
+    const testMetrics = model?.isCalibratedModel ? model.testMetrics : null;
+    const accuracyPct = calculateAccuracyPercent(testMetrics);
     res.json({
       ok: true,
       datasetLoaded: Boolean(manifest && manifest.samples.length > 0),
       sampleCount: manifest?.samples.length ?? 0,
       calibratedModelLoaded: Boolean(model?.isCalibratedModel),
+      modelVersion: model?.version ?? null,
+      heldOutModelAccuracyPct:
+        accuracyPct !== null ? Number(accuracyPct.toFixed(2)) : null,
+      heldOutModelAccuracyDisplay: formatModelAccuracyDisplay(testMetrics),
+      evaluatedTestSampleCount: testMetrics?.sampleCount ?? 0,
     });
   });
 
@@ -102,6 +114,12 @@ async function startServer() {
     try {
       const earlier = readPngBuffer(sample.earlierImageUrl);
       const later = readPngBuffer(sample.laterImageUrl);
+      const footprints = sample.groundTruth.footprintsUrl
+        ? loadJsonFile<BuildingFootprintPolygon[]>(
+            path.join('public', sample.groundTruth.footprintsUrl.replace(/^\//, ''))
+          ) ?? []
+        : [];
+
       const userConfig = (req.body?.config ?? {}) as Partial<PreprocessingConfig>;
       const config: PreprocessingConfig = {
         ...DEFAULT_PREPROCESSING_CONFIG,
@@ -114,7 +132,11 @@ async function startServer() {
         spatial: sample.spatial,
         config,
         model,
+        groundTruthFootprints: footprints,
       });
+
+      const testMetrics = model?.isCalibratedModel ? model.testMetrics : null;
+      const accuracyPct = calculateAccuracyPercent(testMetrics);
 
       res.json({
         sampleId: sample.id,
@@ -123,6 +145,7 @@ async function startServer() {
         candidatePixelCount: result.candidatePixelCount,
         candidateChangedPct: result.candidateChangedPct,
         candidateAreaM2: result.candidateAreaM2,
+        pixelChangeIoU: result.pixelChangeIoU ?? null,
         rawDiffPixelCount: result.rawDiffPixelCount,
         rawDiffPct: result.rawDiffPct,
         suppressedEnvPixelCount: result.suppressedEnvPixelCount,
@@ -131,6 +154,14 @@ async function startServer() {
         topRegions: result.regions.slice(0, 15),
         extractedFeatures: result.extractedFeatures,
         classification: result.classification,
+        modelAccuracy: {
+          heldOutTestAccuracyPct:
+            accuracyPct !== null ? Number(accuracyPct.toFixed(2)) : null,
+          display: formatModelAccuracyDisplay(testMetrics),
+          evaluatedSampleCount: testMetrics?.sampleCount ?? 0,
+          evaluationSplit:
+            model?.evaluationSplitLabel ?? 'SpaceNet 7 Held-Out Geographic Test Split',
+        },
         processingDurationMs: result.processingDurationMs,
       });
     } catch (err: any) {
@@ -138,7 +169,8 @@ async function startServer() {
     }
   });
 
-  const isProd = process.env.NODE_ENV === 'production' && fs.existsSync(path.join(ROOT_DIR, 'dist'));
+  const isProd =
+    process.env.NODE_ENV === 'production' && fs.existsSync(path.join(ROOT_DIR, 'dist'));
 
   if (!isProd) {
     const { createServer: createViteServer } = await import('vite');

@@ -1,5 +1,6 @@
 import type {
   AlignmentResult,
+  BuildingFootprintPolygon,
   RawImageBuffer,
   SpatialMetadata,
   ValidationResult,
@@ -167,12 +168,19 @@ export function computeLuminance(img: RawImageBuffer): Float32Array {
 }
 
 /**
- * Computes 3x3 Sobel edge gradient magnitude normalized by 4.0.
+ * Computes 3x3 Sobel gradient components (gx, gy), normalized magnitude, and luminance.
  */
-export function computeSobelMagnitude(img: RawImageBuffer): Float32Array {
+export function computeSobelGradients(img: RawImageBuffer): {
+  mag: Float32Array;
+  gx: Float32Array;
+  gy: Float32Array;
+  lum: Float32Array;
+} {
   const { width: w, height: h } = img;
   const lum = computeLuminance(img);
   const mag = new Float32Array(w * h);
+  const gxArr = new Float32Array(w * h);
+  const gyArr = new Float32Array(w * h);
 
   for (let y = 1; y < h - 1; y++) {
     const row = y * w;
@@ -189,35 +197,92 @@ export function computeSobelMagnitude(img: RawImageBuffer): Float32Array {
       const bc = lum[(y + 1) * w + x];
       const br = lum[(y + 1) * w + (x + 1)];
 
-      const gx = -tl + tr - 2 * ml + 2 * mr - bl + br;
-      const gy = -tl - 2 * tc - tr + bl + 2 * bc + br;
-      mag[idx] = Math.hypot(gx, gy) * 0.25;
+      const gx = (-tl + tr - 2 * ml + 2 * mr - bl + br) * 0.25;
+      const gy = (-tl - 2 * tc - tr + bl + 2 * bc + br) * 0.25;
+      gxArr[idx] = gx;
+      gyArr[idx] = gy;
+      mag[idx] = Math.hypot(gx, gy);
     }
   }
-  return mag;
+  return { mag, gx: gxArr, gy: gyArr, lum };
 }
 
 /**
- * Estimates integer pixel translation (dx, dy) between earlier and later images
- * via Normalized Cross-Correlation on Sobel gradient magnitude maps, then shifts
- * the later image into alignment with the earlier image.
+ * Computes 3x3 Sobel edge gradient magnitude normalized by 4.0.
+ */
+export function computeSobelMagnitude(img: RawImageBuffer): Float32Array {
+  return computeSobelGradients(img).mag;
+}
+
+/**
+ * Separable 5x5 local luminance range (max - min) to detect sharp 3D roof-to-shadow dipoles.
+ */
+export function computeLocalLuminanceRange5x5(
+  lum: Float32Array,
+  w: number,
+  h: number
+): Float32Array {
+  const n = w * h;
+  const rowMin = new Float32Array(n);
+  const rowMax = new Float32Array(n);
+  const rangeOut = new Float32Array(n);
+
+  for (let y = 0; y < h; y++) {
+    const rOff = y * w;
+    for (let x = 0; x < w; x++) {
+      let mn = 255;
+      let mx = 0;
+      const x0 = Math.max(0, x - 2);
+      const x1 = Math.min(w - 1, x + 2);
+      for (let xx = x0; xx <= x1; xx++) {
+        const v = lum[rOff + xx];
+        if (v < mn) mn = v;
+        if (v > mx) mx = v;
+      }
+      rowMin[rOff + x] = mn;
+      rowMax[rOff + x] = mx;
+    }
+  }
+
+  for (let y = 0; y < h; y++) {
+    const y0 = Math.max(0, y - 2);
+    const y1 = Math.min(h - 1, y + 2);
+    for (let x = 0; x < w; x++) {
+      let mn = 255;
+      let mx = 0;
+      for (let yy = y0; yy <= y1; yy++) {
+        const idx = yy * w + x;
+        if (rowMin[idx] < mn) mn = rowMin[idx];
+        if (rowMax[idx] > mx) mx = rowMax[idx];
+      }
+      rangeOut[y * w + x] = mx - mn;
+    }
+  }
+  return rangeOut;
+}
+
+/**
+ * Estimates translational offset (dx, dy) between earlier and later images via
+ * Normalized Cross-Correlation on Sobel gradient magnitude maps.
+ * Supports sub-pixel parabolic peak refinement + bilinear RGBA resampling to suppress
+ * 0.1–0.5 px Planet Dove mosaic co-registration edge halos on unchanged structures.
  */
 export function alignLaterImage(
   earlier: RawImageBuffer,
   later: RawImageBuffer,
   enableAlignment: boolean,
-  maxShift = 4
+  maxShift = 4,
+  enableSubpixel = true
 ): { alignedLater: RawImageBuffer; alignment: AlignmentResult } {
   const edge1 = computeSobelMagnitude(earlier);
   const edge2 = computeSobelMagnitude(later);
   const { width: w, height: h } = earlier;
 
-  const evalNcc = (dx: number, dy: number): number => {
+  const evalNccBuffers = (e1: Float32Array, e2: Float32Array, dx: number, dy: number): number => {
     const margin = maxShift + 2;
     let sum1 = 0;
     let sum2 = 0;
     let count = 0;
-    // Stride 2 for fast, accurate correlation across interior window
     for (let y = margin; y < h - margin; y += 2) {
       const y2 = y - dy;
       for (let x = margin; x < w - margin; x += 2) {
@@ -225,8 +290,8 @@ export function alignLaterImage(
         const i1 = y * w + x;
         const i2 = y2 * w + x2;
         if (earlier.data[i1 * 4 + 3] < 200 || later.data[i2 * 4 + 3] < 200) continue;
-        sum1 += edge1[i1];
-        sum2 += edge2[i2];
+        sum1 += e1[i1];
+        sum2 += e2[i2];
         count++;
       }
     }
@@ -244,8 +309,8 @@ export function alignLaterImage(
         const i1 = y * w + x;
         const i2 = y2 * w + x2;
         if (earlier.data[i1 * 4 + 3] < 200 || later.data[i2 * 4 + 3] < 200) continue;
-        const d1 = edge1[i1] - mean1;
-        const d2 = edge2[i2] - mean2;
+        const d1 = e1[i1] - mean1;
+        const d2 = e2[i2] - mean2;
         num += d1 * d2;
         den1 += d1 * d1;
         den2 += d2 * d2;
@@ -255,7 +320,17 @@ export function alignLaterImage(
     return denom > 1e-6 ? num / denom : 0;
   };
 
-  const nccZero = evalNcc(0, 0);
+  const nccGrid = new Float64Array((2 * maxShift + 1) * (2 * maxShift + 1));
+  const gridIdx = (dx: number, dy: number) =>
+    (dy + maxShift) * (2 * maxShift + 1) + (dx + maxShift);
+
+  for (let dy = -maxShift; dy <= maxShift; dy++) {
+    for (let dx = -maxShift; dx <= maxShift; dx++) {
+      nccGrid[gridIdx(dx, dy)] = evalNccBuffers(edge1, edge2, dx, dy);
+    }
+  }
+
+  const nccZero = nccGrid[gridIdx(0, 0)];
   if (!enableAlignment) {
     return {
       alignedLater: cloneBuffer(later),
@@ -276,8 +351,8 @@ export function alignLaterImage(
   for (let dy = -maxShift; dy <= maxShift; dy++) {
     for (let dx = -maxShift; dx <= maxShift; dx++) {
       if (dx === 0 && dy === 0) continue;
-      const score = evalNcc(dx, dy);
-      if (score > bestNcc + 0.008) {
+      const score = nccGrid[gridIdx(dx, dy)];
+      if (score > bestNcc + (enableSubpixel ? 0.003 : 0.008)) {
         bestNcc = score;
         bestDx = dx;
         bestDy = dy;
@@ -285,7 +360,35 @@ export function alignLaterImage(
     }
   }
 
-  if (bestDx === 0 && bestDy === 0) {
+  let subDx = 0;
+  let subDy = 0;
+  if (enableSubpixel) {
+    if (bestDx > -maxShift && bestDx < maxShift) {
+      const sL = nccGrid[gridIdx(bestDx - 1, bestDy)];
+      const sC = nccGrid[gridIdx(bestDx, bestDy)];
+      const sR = nccGrid[gridIdx(bestDx + 1, bestDy)];
+      const denom = 2 * (sL - 2 * sC + sR);
+      if (denom < -1e-5) {
+        const d = Math.max(-0.45, Math.min(0.45, (sL - sR) / denom));
+        if (Math.abs(d) >= 0.08) subDx = d;
+      }
+    }
+    if (bestDy > -maxShift && bestDy < maxShift) {
+      const sU = nccGrid[gridIdx(bestDx, bestDy - 1)];
+      const sC = nccGrid[gridIdx(bestDx, bestDy)];
+      const sD = nccGrid[gridIdx(bestDx, bestDy + 1)];
+      const denom = 2 * (sU - 2 * sC + sD);
+      if (denom < -1e-5) {
+        const d = Math.max(-0.45, Math.min(0.45, (sU - sD) / denom));
+        if (Math.abs(d) >= 0.08) subDy = d;
+      }
+    }
+  }
+
+  const totalDx = Number((bestDx + subDx).toFixed(2));
+  const totalDy = Number((bestDy + subDy).toFixed(2));
+
+  if (Math.abs(totalDx) < 0.08 && Math.abs(totalDy) < 0.08) {
     return {
       alignedLater: cloneBuffer(later),
       alignment: {
@@ -298,30 +401,101 @@ export function alignLaterImage(
     };
   }
 
+  // Bilinear resampling for sub-pixel shifts; exact copy for pure integer shifts
+  const isPureInteger = totalDx === Math.trunc(totalDx) && totalDy === Math.trunc(totalDy);
   const shifted = new Uint8ClampedArray(w * h * 4);
-  for (let y = 0; y < h; y++) {
-    const sy = y - bestDy;
-    if (sy < 0 || sy >= h) continue;
-    for (let x = 0; x < w; x++) {
-      const sx = x - bestDx;
-      if (sx < 0 || sx >= w) continue;
-      const dstIdx = (y * w + x) * 4;
-      const srcIdx = (sy * w + sx) * 4;
-      shifted[dstIdx] = later.data[srcIdx];
-      shifted[dstIdx + 1] = later.data[srcIdx + 1];
-      shifted[dstIdx + 2] = later.data[srcIdx + 2];
-      shifted[dstIdx + 3] = later.data[srcIdx + 3];
+
+  if (isPureInteger) {
+    const idxDx = Math.trunc(totalDx);
+    const idxDy = Math.trunc(totalDy);
+    for (let y = 0; y < h; y++) {
+      const sy = y - idxDy;
+      if (sy < 0 || sy >= h) continue;
+      for (let x = 0; x < w; x++) {
+        const sx = x - idxDx;
+        if (sx < 0 || sx >= w) continue;
+        const dstIdx = (y * w + x) * 4;
+        const srcIdx = (sy * w + sx) * 4;
+        shifted[dstIdx] = later.data[srcIdx];
+        shifted[dstIdx + 1] = later.data[srcIdx + 1];
+        shifted[dstIdx + 2] = later.data[srcIdx + 2];
+        shifted[dstIdx + 3] = later.data[srcIdx + 3];
+      }
+    }
+  } else {
+    for (let y = 0; y < h; y++) {
+      const sy = y - totalDy;
+      if (sy < 0 || sy > h - 1) continue;
+      const y0 = Math.floor(sy);
+      const y1 = Math.min(h - 1, y0 + 1);
+      const wy = sy - y0;
+      for (let x = 0; x < w; x++) {
+        const sx = x - totalDx;
+        if (sx < 0 || sx > w - 1) continue;
+        const x0 = Math.floor(sx);
+        const x1 = Math.min(w - 1, x0 + 1);
+        const wx = sx - x0;
+
+        const p00 = (y0 * w + x0) * 4;
+        const p10 = (y0 * w + x1) * 4;
+        const p01 = (y1 * w + x0) * 4;
+        const p11 = (y1 * w + x1) * 4;
+
+        const minAlpha = Math.min(
+          later.data[p00 + 3],
+          later.data[p10 + 3],
+          later.data[p01 + 3],
+          later.data[p11 + 3]
+        );
+        const dstIdx = (y * w + x) * 4;
+        if (minAlpha < 200) {
+          shifted[dstIdx + 3] = 0;
+          continue;
+        }
+        const w00 = (1 - wx) * (1 - wy);
+        const w10 = wx * (1 - wy);
+        const w01 = (1 - wx) * wy;
+        const w11 = wx * wy;
+        for (let c = 0; c < 3; c++) {
+          shifted[dstIdx + c] = Math.round(
+            later.data[p00 + c] * w00 +
+              later.data[p10 + c] * w10 +
+              later.data[p01 + c] * w01 +
+              later.data[p11 + c] * w11
+          );
+        }
+        shifted[dstIdx + 3] = 255;
+      }
     }
   }
 
+  const shiftedBuf: RawImageBuffer = { width: w, height: h, data: shifted };
+  const edgeShifted = computeSobelMagnitude(shiftedBuf);
+  const verifiedNcc = isPureInteger
+    ? bestNcc
+    : evalNccBuffers(edge1, edgeShifted, 0, 0);
+
+  if (verifiedNcc <= nccZero + 0.0015) {
+    return {
+      alignedLater: cloneBuffer(later),
+      alignment: {
+        applied: true,
+        dx: 0,
+        dy: 0,
+        nccScoreBefore: Number(nccZero.toFixed(4)),
+        nccScoreAfter: Number(nccZero.toFixed(4)),
+      },
+    };
+  }
+
   return {
-    alignedLater: { width: w, height: h, data: shifted },
+    alignedLater: shiftedBuf,
     alignment: {
       applied: true,
-      dx: bestDx,
-      dy: bestDy,
+      dx: totalDx,
+      dy: totalDy,
       nccScoreBefore: Number(nccZero.toFixed(4)),
-      nccScoreAfter: Number(bestNcc.toFixed(4)),
+      nccScoreAfter: Number(verifiedNcc.toFixed(4)),
     },
   };
 }
@@ -370,7 +544,6 @@ export function applyDenoising(
     return { width: w, height: h, data: out };
   }
 
-  // Edge-preserving 3x3 bilateral filter (sigma_s = 1.4, sigma_r = 24)
   const spatialWeights = [
     0.3679, 0.6065, 0.3679,
     0.6065, 1.0,    0.6065,
@@ -480,7 +653,6 @@ export function applyContrastEnhancement(
     return { width: w, height: h, data: out };
   }
 
-  // Tile-based CLAHE on perceptual luminance (8x8 grid with bilinear interpolation)
   const gridX = 8;
   const gridY = 8;
   const tileW = Math.ceil(w / gridX);
@@ -573,13 +745,16 @@ export function applyContrastEnhancement(
 }
 
 /**
- * Matches channel mean and standard deviation of `later` to `earlier` across mutually valid pixels
- * to suppress global illumination, haze, and sensor exposure drift prior to spectral differencing.
+ * Matches channel mean and standard deviation of `later` to `earlier`.
+ * When `usePseudoInvariantFeatures` is true (default), estimates gain & offset strictly
+ * over the 70% lowest-change background pixels (Pseudo-Invariant Features / PIF) so large
+ * construction districts or harvested crop fields do not skew the radiometric baseline.
  */
 export function normalizeRadiometryToBaseline(
   earlier: RawImageBuffer,
   later: RawImageBuffer,
-  enableMatch: boolean
+  enableMatch: boolean,
+  usePseudoInvariantFeatures = true
 ): Float32Array {
   const n = earlier.width * earlier.height;
   const normRgb = new Float32Array(n * 3);
@@ -594,13 +769,139 @@ export function normalizeRadiometryToBaseline(
     return normRgb;
   }
 
+  // Pass 1: Global channel mean & std across all valid clear-sky pixels
+  const gMean1 = [0, 0, 0];
+  const gMean2 = [0, 0, 0];
+  const gGain = [1, 1, 1];
+  let validN = 0;
+
+  for (let i = 0; i < n; i++) {
+    const idx = i * 4;
+    if (earlier.data[idx + 3] < 200 || later.data[idx + 3] < 200) continue;
+    if (
+      (earlier.data[idx] === 0 && earlier.data[idx + 1] === 0 && earlier.data[idx + 2] === 0) ||
+      (later.data[idx] === 0 && later.data[idx + 1] === 0 && later.data[idx + 2] === 0)
+    ) {
+      continue;
+    }
+    validN++;
+    for (let c = 0; c < 3; c++) {
+      gMean1[c] += earlier.data[idx + c];
+      gMean2[c] += later.data[idx + c];
+    }
+  }
+
+  if (validN < 50) {
+    for (let i = 0; i < n; i++) {
+      const idx = i * 4;
+      normRgb[i * 3] = later.data[idx];
+      normRgb[i * 3 + 1] = later.data[idx + 1];
+      normRgb[i * 3 + 2] = later.data[idx + 2];
+    }
+    return normRgb;
+  }
+
+  for (let c = 0; c < 3; c++) {
+    gMean1[c] /= validN;
+    gMean2[c] /= validN;
+  }
+
+  const gVar1 = [0, 0, 0];
+  const gVar2 = [0, 0, 0];
+  for (let i = 0; i < n; i++) {
+    const idx = i * 4;
+    if (earlier.data[idx + 3] < 200 || later.data[idx + 3] < 200) continue;
+    if (
+      (earlier.data[idx] === 0 && earlier.data[idx + 1] === 0 && earlier.data[idx + 2] === 0) ||
+      (later.data[idx] === 0 && later.data[idx + 1] === 0 && later.data[idx + 2] === 0)
+    ) {
+      continue;
+    }
+    for (let c = 0; c < 3; c++) {
+      const d1 = earlier.data[idx + c] - gMean1[c];
+      const d2 = later.data[idx + c] - gMean2[c];
+      gVar1[c] += d1 * d1;
+      gVar2[c] += d2 * d2;
+    }
+  }
+
+  for (let c = 0; c < 3; c++) {
+    const s1 = Math.sqrt(gVar1[c] / validN);
+    const s2 = Math.sqrt(gVar2[c] / validN);
+    const rawG = s2 > 1e-4 ? s1 / s2 : 1;
+    gGain[c] = usePseudoInvariantFeatures
+      ? Math.min(1.35, Math.max(0.75, rawG))
+      : rawG;
+  }
+
+  // Pass 2: Identify the 75% lowest-residual Pseudo-Invariant Features AFTER Pass-1 illumination removal
+  let pifMask: Uint8Array | null = null;
+  if (usePseudoInvariantFeatures && validN > 200) {
+    const diffHist = new Uint32Array(256);
+    const resArr = new Uint8Array(n);
+
+    for (let i = 0; i < n; i++) {
+      const idx = i * 4;
+      if (earlier.data[idx + 3] < 200 || later.data[idx + 3] < 200) continue;
+      if (
+        (earlier.data[idx] === 0 && earlier.data[idx + 1] === 0 && earlier.data[idx + 2] === 0) ||
+        (later.data[idx] === 0 && later.data[idx + 1] === 0 && later.data[idx + 2] === 0)
+      ) {
+        continue;
+      }
+      const r2p = gMean1[0] + gGain[0] * (later.data[idx] - gMean2[0]);
+      const g2p = gMean1[1] + gGain[1] * (later.data[idx + 1] - gMean2[1]);
+      const b2p = gMean1[2] + gGain[2] * (later.data[idx + 2] - gMean2[2]);
+      const d = Math.min(
+        255,
+        Math.round(
+          (Math.abs(r2p - earlier.data[idx]) +
+            Math.abs(g2p - earlier.data[idx + 1]) +
+            Math.abs(b2p - earlier.data[idx + 2])) /
+            3
+        )
+      );
+      resArr[i] = d;
+      diffHist[d]++;
+    }
+
+    const targetCount = validN * 0.75;
+    let cum = 0;
+    let p75 = 255;
+    for (let v = 0; v < 256; v++) {
+      cum += diffHist[v];
+      if (cum >= targetCount) {
+        p75 = v;
+        break;
+      }
+    }
+
+    pifMask = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      const idx = i * 4;
+      if (
+        earlier.data[idx + 3] >= 200 &&
+        later.data[idx + 3] >= 200 &&
+        !(earlier.data[idx] === 0 && earlier.data[idx + 1] === 0 && earlier.data[idx + 2] === 0) &&
+        !(later.data[idx] === 0 && later.data[idx + 1] === 0 && later.data[idx + 2] === 0) &&
+        resArr[i] <= p75
+      ) {
+        pifMask[i] = 1;
+      }
+    }
+  }
+
   for (let c = 0; c < 3; c++) {
     let sum1 = 0;
     let sum2 = 0;
     let count = 0;
     for (let i = 0; i < n; i++) {
       const idx = i * 4;
-      if (earlier.data[idx + 3] < 200 || later.data[idx + 3] < 200) continue;
+      if (pifMask) {
+        if (!pifMask[i]) continue;
+      } else if (earlier.data[idx + 3] < 200 || later.data[idx + 3] < 200) {
+        continue;
+      }
       sum1 += earlier.data[idx + c];
       sum2 += later.data[idx + c];
       count++;
@@ -613,7 +914,11 @@ export function normalizeRadiometryToBaseline(
     let var2 = 0;
     for (let i = 0; i < n; i++) {
       const idx = i * 4;
-      if (earlier.data[idx + 3] < 200 || later.data[idx + 3] < 200) continue;
+      if (pifMask) {
+        if (!pifMask[i]) continue;
+      } else if (earlier.data[idx + 3] < 200 || later.data[idx + 3] < 200) {
+        continue;
+      }
       const d1 = earlier.data[idx + c] - mean1;
       const d2 = later.data[idx + c] - mean2;
       var1 += d1 * d1;
@@ -621,7 +926,6 @@ export function normalizeRadiometryToBaseline(
     }
     const std1 = Math.sqrt(var1 / count);
     const std2 = Math.sqrt(var2 / count);
-    // Clamp gain to [0.65, 1.50] to avoid amplifying extreme outliers
     const gain = std2 > 1e-3 ? Math.max(0.65, Math.min(1.5, std1 / std2)) : 1;
 
     for (let i = 0; i < n; i++) {
@@ -631,4 +935,85 @@ export function normalizeRadiometryToBaseline(
   }
 
   return normRgb;
+}
+
+/**
+ * Rasterizes polygon footprints matching `statuses` onto a binary mask (width x height)
+ * so pixel-level Intersection over Union (IoU) can be evaluated against SpaceNet 7 annotations.
+ */
+export function rasterizeFootprintsToMask(
+  footprints: BuildingFootprintPolygon[],
+  width: number,
+  height: number,
+  statuses: BuildingFootprintPolygon['status'][] = ['new_construction', 'removed']
+): Uint8Array {
+  const mask = new Uint8Array(width * height);
+  const statusSet = new Set(statuses);
+
+  for (const fp of footprints) {
+    if (!statusSet.has(fp.status) || fp.ring.length < 3) continue;
+
+    let minY = height;
+    let maxY = 0;
+    for (const [, ry] of fp.ring) {
+      if (ry < minY) minY = ry;
+      if (ry > maxY) maxY = ry;
+    }
+    const yStart = Math.max(0, Math.floor(minY));
+    const yEnd = Math.min(height - 1, Math.ceil(maxY));
+
+    const nodes: number[] = [];
+    for (let y = yStart; y <= yEnd; y++) {
+      const py = y + 0.5;
+      nodes.length = 0;
+      const m = fp.ring.length;
+      for (let i = 0, j = m - 1; i < m; j = i++) {
+        const xi = fp.ring[i][0];
+        const yi = fp.ring[i][1];
+        const xj = fp.ring[j][0];
+        const yj = fp.ring[j][1];
+        if ((yi < py && yj >= py) || (yj < py && yi >= py)) {
+          nodes.push(xi + ((py - yi) / (yj - yi)) * (xj - xi));
+        }
+      }
+      nodes.sort((a, b) => a - b);
+      for (let k = 0; k < nodes.length - 1; k += 2) {
+        const x0 = Math.max(0, Math.floor(nodes[k]));
+        const x1 = Math.min(width - 1, Math.ceil(nodes[k + 1]));
+        const rOff = y * width;
+        for (let x = x0; x <= x1; x++) {
+          mask[rOff + x] = 1;
+        }
+      }
+    }
+  }
+
+  return mask;
+}
+
+/**
+ * Computes pixel-level Intersection over Union (IoU) between two binary masks.
+ */
+export function computeBinaryMaskIoU(
+  predMask: Uint8Array,
+  gtMask: Uint8Array
+): { intersection: number; union: number; iou: number } {
+  const n = Math.min(predMask.length, gtMask.length);
+  let intersection = 0;
+  let union = 0;
+  for (let i = 0; i < n; i++) {
+    const p = predMask[i] > 0;
+    const g = gtMask[i] > 0;
+    if (p && g) {
+      intersection++;
+      union++;
+    } else if (p || g) {
+      union++;
+    }
+  }
+  return {
+    intersection,
+    union,
+    iou: union > 0 ? intersection / union : 0,
+  };
 }

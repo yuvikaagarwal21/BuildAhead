@@ -4,7 +4,11 @@ import type {
   PreprocessingConfig,
   RawImageBuffer,
   SampleManifestEntry,
-} from '../types/satellite';
+} from '../types/satellite.ts';
+import {
+  calculateAccuracyPercent,
+  formatModelAccuracyDisplay,
+} from './classifier.ts';
 
 function escapeCsvCell(value: string | number | boolean | null | undefined): string {
   if (value === null || value === undefined) return '';
@@ -22,10 +26,13 @@ function escapeCsvCell(value: string | number | boolean | null | undefined): str
 export function buildComparisonCsvString(
   sample: SampleManifestEntry,
   config: PreprocessingConfig,
-  result: ChangeDetectionResult
+  result: ChangeDetectionResult,
+  model?: ModelArtifact | null
 ): string {
   const gt = sample.groundTruth;
   const cls = result.classification;
+  const testMetrics = model?.isCalibratedModel ? model.testMetrics : null;
+  const accuracyPct = calculateAccuracyPercent(testMetrics);
 
   const rows: [string, string | number | boolean | null][] = [
     ['sample_id', sample.id],
@@ -62,6 +69,12 @@ export function buildComparisonCsvString(
     ['candidate_changed_proportion_pct', result.candidateChangedPct],
     ['candidate_changed_area_m2', result.candidateAreaM2],
     ['candidate_region_count', result.regions.length],
+    [
+      'pixel_change_iou_vs_ground_truth',
+      result.pixelChangeIoU !== null && result.pixelChangeIoU !== undefined
+        ? result.pixelChangeIoU
+        : 'N/A (no changed footprints)',
+    ],
     ['raw_unfiltered_diff_pixels', result.rawDiffPixelCount],
     ['raw_unfiltered_diff_pct', result.rawDiffPct],
     ['suppressed_seasonal_shadow_pixels', result.suppressedEnvPixelCount],
@@ -71,6 +84,9 @@ export function buildComparisonCsvString(
     ['feature_mean_cluster_edge_gain', cls.features.meanClusterEdgeGain],
     ['feature_compact_cluster_density_km2', cls.features.compactClusterDensityKm2],
     ['feature_seasonal_veg_shift_fraction', cls.features.seasonalVegShiftFraction],
+    ['feature_new_edge_emergence_pct', cls.features.newEdgeEmergencePct],
+    ['feature_roof_shadow_dipole_pct', cls.features.roofShadowDipolePct],
+    ['feature_patch_activity_concentration', cls.features.patchActivityConcentration],
     ['classification_mode', cls.mode],
     ['predicted_category', cls.predictedCategory],
     [
@@ -78,8 +94,60 @@ export function buildComparisonCsvString(
       cls.probabilityBuildingChange !== null ? cls.probabilityBuildingChange : 'N/A (rule screening)',
     ],
     [
-      'predicted_class_confidence',
+      'raw_uncalibrated_probability',
+      cls.rawUncalibratedProbability !== null && cls.rawUncalibratedProbability !== undefined
+        ? cls.rawUncalibratedProbability
+        : 'N/A',
+    ],
+    [
+      'model_confidence_single_sample',
       cls.confidenceScore !== null ? cls.confidenceScore : 'N/A (rule screening)',
+    ],
+    [
+      'confidence_uncertainty_level',
+      cls.uncertaintyLevel ?? 'unscored',
+    ],
+    [
+      'probability_calibration_method',
+      model?.calibration?.method ?? 'none',
+    ],
+    [
+      'model_accuracy_held_out_test_pct',
+      accuracyPct !== null ? Number(accuracyPct.toFixed(2)) : 'Not evaluated.',
+    ],
+    [
+      'model_accuracy_held_out_ci95_pct',
+      testMetrics?.accuracyCi95
+        ? `${(testMetrics.accuracyCi95[0] * 100).toFixed(1)}-${(
+            testMetrics.accuracyCi95[1] * 100
+          ).toFixed(1)}`
+        : 'Not evaluated.',
+    ],
+    [
+      'model_accuracy_evaluated_samples',
+      testMetrics ? testMetrics.sampleCount : 0,
+    ],
+    [
+      'model_accuracy_evaluation_split',
+      model?.evaluationSplitLabel ?? (testMetrics ? 'Held-out test split' : 'Not evaluated.'),
+    ],
+    [
+      'model_geo_cv_5fold_accuracy_pct',
+      model?.geoCvMetrics
+        ? Number((model.geoCvMetrics.accuracy * 100).toFixed(2))
+        : 'Not evaluated.',
+    ],
+    [
+      'model_test_brier_score',
+      testMetrics ? testMetrics.brierScore : 'Not evaluated.',
+    ],
+    [
+      'model_test_log_loss',
+      testMetrics?.logLoss !== undefined ? testMetrics.logLoss : 'Not evaluated.',
+    ],
+    [
+      'model_test_ece',
+      testMetrics?.ece !== undefined ? testMetrics.ece : 'Not evaluated.',
     ],
     ['ground_truth_available', gt.available],
     ['ground_truth_earlier_buildings', gt.earlierCount],
@@ -114,6 +182,9 @@ export function buildResultsJsonPayload(
   result: ChangeDetectionResult,
   model?: ModelArtifact | null
 ) {
+  const testMetrics = model?.isCalibratedModel ? model.testMetrics : null;
+  const accuracyPct = calculateAccuracyPercent(testMetrics);
+
   return {
     application: 'BuildAhead — Satellite-Based Construction Change Detection',
     scopeNotice:
@@ -148,6 +219,7 @@ export function buildResultsJsonPayload(
       candidateChangedPct: result.candidateChangedPct,
       candidateAreaM2: result.candidateAreaM2,
       candidateRegionCount: result.regions.length,
+      pixelChangeIoU: result.pixelChangeIoU ?? null,
       rawUnfilteredDiffPixels: result.rawDiffPixelCount,
       rawUnfilteredDiffPct: result.rawDiffPct,
       suppressedEnvironmentalPixels: result.suppressedEnvPixelCount,
@@ -159,14 +231,37 @@ export function buildResultsJsonPayload(
     calibratedModelMetadata: model
       ? {
           modelType: model.modelType,
+          modelLabel: model.modelLabel ?? model.modelType,
           version: model.version,
           datasetSource: model.datasetSource,
+          evaluationSplitLabel:
+            model.evaluationSplitLabel ?? 'SpaceNet 7 Held-Out Geographic Test Split',
+          heldOutModelAccuracyDisplay: formatModelAccuracyDisplay(testMetrics),
+          heldOutModelAccuracyPct:
+            accuracyPct !== null ? Number(accuracyPct.toFixed(2)) : null,
+          heldOutModelAccuracyCi95Pct: testMetrics?.accuracyCi95
+            ? [
+                Number((testMetrics.accuracyCi95[0] * 100).toFixed(2)),
+                Number((testMetrics.accuracyCi95[1] * 100).toFixed(2)),
+              ]
+            : null,
           leakagePrevention: model.leakagePrevention,
           minTrainTestDistanceKm: model.minTrainTestDistanceKm,
+          minSplitPairwiseDistanceKm: model.minSplitPairwiseDistanceKm ?? null,
+          decisionThreshold: model.decisionThreshold,
+          classWeights: model.classWeights ?? null,
+          calibration: model.calibration ?? null,
           trainMetrics: model.trainMetrics,
+          geoCvMetrics: model.geoCvMetrics ?? null,
+          validationMetrics: model.valMetrics ?? null,
           heldOutTestMetrics: model.testMetrics,
+          pixelIoUMetrics: model.pixelIoUMetrics ?? null,
+          baselineComparison: model.baselineComparison ?? null,
         }
-      : null,
+      : {
+          heldOutModelAccuracyDisplay: 'Not evaluated.',
+          heldOutModelAccuracyPct: null,
+        },
     knownLimitations: [
       result.classification.limitationsNote,
       ...sample.knownLimitations,
@@ -213,9 +308,10 @@ export function downloadChangeMapPng(
 export function downloadComparisonCsv(
   sample: SampleManifestEntry,
   config: PreprocessingConfig,
-  result: ChangeDetectionResult
+  result: ChangeDetectionResult,
+  model?: ModelArtifact | null
 ): void {
-  const csv = buildComparisonCsvString(sample, config, result);
+  const csv = buildComparisonCsvString(sample, config, result, model);
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const fname = `buildahead_${sample.id}_${sample.earlierDate}_to_${sample.laterDate}_summary.csv`;
   triggerBlobDownload(blob, fname);

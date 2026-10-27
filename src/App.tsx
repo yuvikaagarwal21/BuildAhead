@@ -148,8 +148,9 @@ export default function App() {
       spatial: selectedSample.spatial,
       config,
       model,
+      groundTruthFootprints: footprints,
     });
-  }, [earlierRaw, laterRaw, selectedSample, config, model]);
+  }, [earlierRaw, laterRaw, selectedSample, config, model, footprints]);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
